@@ -1,0 +1,11 @@
+{
+  "csv_roundtrip_exact": true,
+  "all_11076_labels_recomputed_exactly": true,
+  "9_rule_boundary_checks_passed": true,
+  "train_test_inns_disjoint": true,
+  "model_serialization_predictions_unchanged": true,
+  "shuffling_all_outcome_columns_does_not_change_predictions": true,
+  "saved_csv_prediction_reproduction_max_abs_difference": 1.1102230246251565e-16,
+  "holdout_companies": 941,
+  "dataset_sha256": "d16405a62bad1d8b698dcd1ce5c4b5a1f479b384083758a01f8cddb567bc426f"
+}

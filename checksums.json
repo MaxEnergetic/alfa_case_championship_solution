@@ -1,0 +1,16 @@
+{
+  "README.md": "a64355ff8c727c29fafa49fc332f84861e84c6d7d20344e8ac751f33b10de026",
+  "data_audit.json": "b298179a7745f8fce2bd272e42680316f18bcc8120efcf1be7c2f965ebbd7793",
+  "holdout_predictions.json": "a0a05f57cb95beb4a1fe67ccedc9053b2e10b6dee9bd79349f8d83d712d759fe",
+  "label_rules.py": "807f4600df471f587a4412f6b7cbf1b9fe611862cb267355ccddc02a950b4172",
+  "metrics.json": "df0eebad703cb925eae50ec02510d8902e792472f2ab08877567f2fee2c7f85b",
+  "model.joblib": "cf664f2139b199a789d9c863ba8939399232bde6501dea2b6a400f796b315508",
+  "model_code.py": "b2e0178fc9f97deccf68ed8f689c9a6f0d9fc3315a3f5fc31491f9d013f86bcc",
+  "predict.py": "f40366abf7227a95faa0e3d067e615320bea8d81d32e3d0fa825d502d5e74302",
+  "requirements.txt": "c8513d42a04635fdd9b0cca3517ceb82b9d97c1d3a55509140cda54435e7f3a6",
+  "source_manifest.json": "90c719d8dfdc7a4245799a2452407d22a45855486d32ee8ee455ffa0d3387fcf",
+  "split_map.json": "3b980b4430449e16e2128dccebcdb54220db412f1c7ea0431b67f5dd2167a3ec",
+  "train.py": "f4848ab8fb55a8cffc96e17586da9200a37c16963071b7bba2d5d56060855268",
+  "validation.json": "2d9d2ac7b0e226989e22a5937b8c755e352d976f30461fd80ec5cdca4ec42716",
+  "weights.json": "ee3f07afa65fa39245ceb3a3b4772e5d254f3374dc021c59608ef9cd2814d553"
+}

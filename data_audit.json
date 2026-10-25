@@ -1,0 +1,33 @@
+{
+  "rows": 11076,
+  "columns": 690,
+  "counts": {
+    "label_None": 6245,
+    "excluded_future_report_quality_not_accepted": 596,
+    "label_1": 3316,
+    "eligible_1": 3248,
+    "excluded_required_outcome_values_missing": 492,
+    "excluded_intermediate_financial_state": 2107,
+    "label_0": 1515,
+    "eligible_0": 1454,
+    "excluded_historical_feature_report_quality_not_accepted": 81,
+    "excluded_future_report_not_filed": 785,
+    "excluded_historical_assets_missing_or_nonpositive": 47,
+    "excluded_no_verified_historical_feature_snapshot": 2204,
+    "excluded_invalid_negative_assets_or_liabilities": 13,
+    "excluded_future_report_not_found": 38,
+    "excluded_future_balance_check_failed": 8,
+    "excluded_historical_feature_balance_check_failed": 1,
+    "excluded_financial_sector_outside_rule_scope": 2
+  },
+  "outcome_records_found": 8834,
+  "feature_cutoff": "2025-01-11",
+  "feature_financial_year": 2023,
+  "outcome_financial_year": 2025,
+  "rule_version": "financial_stability_future_v1",
+  "source_revision": "bde9b8b129a8be582b66de4e30ed79c9187a8515",
+  "source_sha256": "e26b5f7b1e3739c3c16ef80d9141d78e9020f77b4f642da43690db7dcc8de84a",
+  "input_sha256": "b8cfc4c52b1136f7372e43a8b5624cfef7daaca5d92553dd15023827168c5d8b",
+  "output_csv_sha256": "d16405a62bad1d8b698dcd1ce5c4b5a1f479b384083758a01f8cddb567bc426f",
+  "output_csv_bytes": 49806167
+}
