@@ -1,0 +1,19 @@
+{
+  "parity_companies": 941,
+  "feature_pairs_checked": 13174,
+  "max_relative_feature_difference_due_to_training_csv_rounding": 4.888438474076686e-10,
+  "max_prediction_difference": 2.34784414132605e-10,
+  "companies_passing_stricter_inference_data_gate": 880,
+  "unit_tests_passed": 24,
+  "validated_at": "2026-10-25",
+  "platform": "Linux",
+  "python": "3.12.14",
+  "live_inn": "5505223431",
+  "live_year": 2025,
+  "live_status": "ready",
+  "automatic_year_selection_passed": true,
+  "offline_cli_passed": true,
+  "cold_cache_full_download_tested": false,
+  "live_download_note": "Previously downloaded immutable footer metadata reused; company row group fetched live by this client.",
+  "probability_financial_stability": 0.8332461929823307
+}
