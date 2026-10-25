@@ -1,0 +1,6 @@
+# Keep the backend portable and preserve SHA256-verified model assets byte for byte.
+backend/** text=auto eol=lf
+backend/fns_parser/scoring/upstream/* -text
+backend/fns_parser/scoring/model_code.py -text
+backend/fns_parser/scoring/bundle/* -text
+backend/fns_parser/scoring/bundle/manifest.json text eol=lf

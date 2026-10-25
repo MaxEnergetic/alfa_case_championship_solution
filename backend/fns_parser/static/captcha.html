@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Ручная проверка · Данные бизнеса</title>
+  <link rel="stylesheet" href="/captcha/assets/captcha.css">
+  <script src="/captcha/assets/captcha.js" defer></script>
+</head>
+<body>
+  <main>
+    <header><span class="mark" aria-hidden="true">А</span><span>ОТКРЫТЫЕ ДАННЫЕ БИЗНЕСА</span><a href="/captcha/batch">Капчи пакетного сбора ↗</a></header>
+    <section class="intro"><p class="eyebrow">ОТКРЫТЫЕ ДАННЫЕ БИЗНЕСА</p><h1>Данные по ИНН<br>или ОГРН.</h1><p>Запустите сбор выписки ЕГРЮЛ/ЕГРИП, данных «Прозрачного бизнеса» и отчётности ГИР БО.</p></section>
+    <section class="card">
+      <form id="start-form">
+        <label for="identifier">ИНН, ОГРН или ОГРНИП</label>
+        <div class="input-row"><input id="identifier" name="identifier" inputmode="numeric" autocomplete="off" placeholder="Например, 4028051108" maxlength="15" pattern="[0-9]{10}|[0-9]{12}|[0-9]{13}|[0-9]{15}" required><button id="start-button" type="submit">Получить данные <span aria-hidden="true">→</span></button></div>
+        <label class="checkbox"><input id="full" type="checkbox"> Полный JSON с исходными данными</label>
+      </form>
+      <p id="error" role="alert" hidden></p>
+    </section>
+    <section id="job" class="card" hidden>
+      <div class="section-heading"><h2 id="job-state" role="status" aria-live="polite">Собираем данные</h2><button id="cancel-button" class="secondary" type="button">Отменить</button></div>
+      <p id="job-detail" class="muted"></p>
+      <section id="challenge" hidden>
+        <div class="notice"><span class="dot"></span><span id="captcha-description">Нужен код с картинки источника</span></div>
+        <p class="muted">Введите символы самостоятельно. Ответ отправится только в источник, который запросил капчу.</p>
+        <div class="captcha-image"><img id="captcha-image" alt="Капча источника: перепишите символы в поле ниже"></div>
+        <p id="captcha-expiry" class="muted small"></p>
+        <form id="answer-form"><label for="code">Код с картинки</label><div class="input-row"><input id="code" name="code" autocomplete="off" autocapitalize="off" spellcheck="false" maxlength="16" pattern="[A-Za-z0-9]+" required><button id="answer-button" type="submit">Продолжить</button></div></form>
+        <div class="actions"><button id="refresh-button" class="text-button" type="button">Запросить заново</button><button id="skip-button" class="text-button" type="button">Пропустить источник</button></div>
+      </section>
+      <section id="result" hidden><div class="section-heading"><h2>Результат</h2><button id="download-button" class="secondary" type="button">Скачать JSON ↓</button></div><p id="result-status"></p><div id="source-list"></div><details><summary>Посмотреть JSON</summary><pre id="json-result"></pre></details></section>
+    </section>
+    <aside><strong>Источники</strong><p>ЕГРЮЛ/ЕГРИП, «Прозрачный бизнес» и ГИР БО. Время обращения и доступность источников сохраняются в JSON вместе с полученными данными.</p></aside>
+    <footer>Без платных сервисов распознавания · Ответ вводит человек</footer>
+  </main>
+</body>
+</html>
