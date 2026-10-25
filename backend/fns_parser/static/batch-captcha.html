@@ -1,0 +1,18 @@
+<!doctype html>
+<html lang="ru">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Капчи ФНС · Сбор датасета</title>
+<link rel="stylesheet" href="/captcha/assets/captcha.css">
+<script src="/captcha/assets/batch-captcha.js" defer></script></head>
+<body><main>
+<header><span class="mark" aria-hidden="true">А</span><span>СБОР ДАТАСЕТА</span><a href="/captcha">Отдельная компания ↗</a></header>
+<section class="intro"><p class="eyebrow">РУЧНАЯ ПРОВЕРКА ФНС</p><h1>Введите код.<br>Сбор продолжится.</h1><p>При запросе капчи сборщик сохраняет сессию ФНС и ждёт ваш ответ. После подтверждения он продолжает с той же компании.</p></section>
+<section class="card"><h2 id="state" role="status" aria-live="polite">Проверяем очередь…</h2><p id="hint" class="muted">Оставьте эту страницу открытой — новые капчи появляются автоматически.</p><p id="error" role="alert" hidden></p></section>
+<section id="challenge" class="card" hidden>
+<p id="description" class="notice"></p><div class="captcha-image"><img id="image" alt="Капча ФНС: введите цифры с картинки"></div>
+<p id="expiry" class="muted small"></p>
+<form id="answer-form"><label for="code">Шесть цифр с картинки</label><div class="input-row"><input id="code" inputmode="numeric" autocomplete="off" maxlength="6" pattern="[0-9]{6}" required><button id="answer" type="submit">Продолжить сбор</button></div></form>
+<div class="actions"><button id="refresh" class="text-button" type="button">Новая картинка</button><button id="skip" class="text-button" type="button">Остановить на этой компании</button></div>
+</section>
+<footer>Ответ вводит человек · Код передаётся в ФНС · Готовые результаты сохраняются</footer>
+</main></body></html>

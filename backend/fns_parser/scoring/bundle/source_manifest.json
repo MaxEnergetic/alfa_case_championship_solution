@@ -1,0 +1,21 @@
+{
+  "features": {
+    "year": 2023,
+    "cutoff": "2025-01-11",
+    "available_by": "2025-01-10T18:19:52Z",
+    "revision": "c557986c2987adfd4299eaf26e23a6abcc3ae8e0",
+    "reported_sha256": "d637f69d83ea09ffec3ba0625413a58a0845893b06202a40c2eb25817c58b38e",
+    "url": "https://huggingface.co/datasets/irlspbru/RFSD/blob/c557986c2987adfd4299eaf26e23a6abcc3ae8e0/RFSD/year%3D2023/part-0.parquet"
+  },
+  "outcomes": {
+    "year": 2025,
+    "available_by": "2026-09-02T15:47:20.000Z",
+    "revision": "bde9b8b129a8be582b66de4e30ed79c9187a8515",
+    "reported_sha256": "e26b5f7b1e3739c3c16ef80d9141d78e9020f77b4f642da43690db7dcc8de84a",
+    "url": "https://huggingface.co/datasets/irlspbru/RFSD/blob/bde9b8b129a8be582b66de4e30ed79c9187a8515/RFSD/year%3D2025/part-0.parquet"
+  },
+  "license": "CC BY 4.0; historical file received this licence on 2025-03-14 without change to its data bytes",
+  "attribution": "RFSD: Sergey Bondarkov, Viktor Ledenev, Dmitriy Skougarevskiy. Russian Financial Statements Database. Scientific Data 12 (2025). DOI 10.1038/s41597-025-05150-1",
+  "units": "source thousand RUB; CSV outcome amounts in RUB",
+  "hash_note": "Source SHA256 values are LFS object identifiers published by Hugging Face; range extraction is pinned to immutable revisions."
+}

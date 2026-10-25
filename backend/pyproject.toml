@@ -1,0 +1,25 @@
+[build-system]
+requires = ["setuptools==84.0.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "fns-parser"
+version = "0.4.0"
+description = "Credit questionnaire and free Russian public business records"
+requires-python = ">=3.11"
+dependencies = ["pdfplumber==0.11.9", "fastapi==0.162.0", "uvicorn==0.54.0", "pydantic==2.14.1"]
+
+[project.optional-dependencies]
+dev = ["httpx==0.28.1"]
+bankruptcy = ["pyarrow==26.0.0", "pymupdf==2.0"]
+scoring = ["numpy==2.3.5", "pandas==2.2.3", "scipy==1.17.0", "scikit-learn==1.8.0", "joblib==1.5.3"]
+
+[project.scripts]
+fns-parser = "fns_parser.__main__:main"
+
+[tool.setuptools.packages.find]
+include = ["fns_parser*"]
+
+[tool.setuptools.package-data]
+fns_parser = ["static/*.html", "static/*.js", "static/*.css"]
+"fns_parser.scoring" = ["bundle/*.json", "bundle/*.joblib", "bundle/*.md", "bundle/*.txt"]

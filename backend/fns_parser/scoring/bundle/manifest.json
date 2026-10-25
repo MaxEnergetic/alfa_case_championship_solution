@@ -1,0 +1,53 @@
+{
+  "repository": "https://github.com/MaxEnergetic/alfa_case_championship_solution",
+  "commit": "726937544c749200e2ab65f627291aa1711062f6",
+  "upstream_stale_document_checksums": [
+    "README.md"
+  ],
+  "files": {
+    "upstream/core.py": {
+      "upstream_path": "parser/alfa_financial_parser/core.py",
+      "sha256": "8b1ca9d32379227fa7e832275519cdcfe5f255334d3993d569393dc8612af40f"
+    },
+    "upstream/rfsd.py": {
+      "upstream_path": "parser/alfa_financial_parser/rfsd.py",
+      "sha256": "a1792dd124e3907dcdb77c6f61302c4573f81375719b3e21df860d5af48f4ce7"
+    },
+    "upstream/parquet.py": {
+      "upstream_path": "parser/alfa_financial_parser/parquet.py",
+      "sha256": "a6335b923864966b2f78bc9e978700bbf3e5097215cae9e945b4c854b6a4441a"
+    },
+    "upstream/__init__.py": {
+      "upstream_path": "parser/alfa_financial_parser/__init__.py",
+      "sha256": "d216e0a9a2f2ea9ce382790713d47a1121c2bf2e0d3c1c566643008893cf9651"
+    },
+    "bundle/model.joblib": {
+      "upstream_path": "model.joblib",
+      "sha256": "cf664f2139b199a789d9c863ba8939399232bde6501dea2b6a400f796b315508"
+    },
+    "bundle/metrics.json": {
+      "upstream_path": "metrics.json",
+      "sha256": "df0eebad703cb925eae50ec02510d8902e792472f2ab08877567f2fee2c7f85b"
+    },
+    "bundle/weights.json": {
+      "upstream_path": "weights.json",
+      "sha256": "ee3f07afa65fa39245ceb3a3b4772e5d254f3374dc021c59608ef9cd2814d553"
+    },
+    "bundle/source_manifest.json": {
+      "upstream_path": "source_manifest.json",
+      "sha256": "90c719d8dfdc7a4245799a2452407d22a45855486d32ee8ee455ffa0d3387fcf"
+    },
+    "bundle/README.md": {
+      "upstream_path": "README.md",
+      "sha256": "9265f27f2b16b7a3fafa8f827b2a6db73c8af44d73715f82c2b31fd7fc79d3f3"
+    },
+    "bundle/requirements.txt": {
+      "upstream_path": "requirements.txt",
+      "sha256": "c8513d42a04635fdd9b0cca3517ceb82b9d97c1d3a55509140cda54435e7f3a6"
+    },
+    "model_code.py": {
+      "upstream_path": "model_code.py",
+      "sha256": "b2e0178fc9f97deccf68ed8f689c9a6f0d9fc3315a3f5fc31491f9d013f86bcc"
+    }
+  }
+}

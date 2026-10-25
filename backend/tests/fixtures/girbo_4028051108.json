@@ -1,0 +1,160 @@
+{
+  "provenance": {
+    "retrieved_on": "2026-10-23",
+    "url": "https://bo.nalog.gov.ru/nbo/organizations/598997/bfo/",
+    "note": "Real public response excerpts, selected fields; not a full report"
+  },
+  "search": {
+    "content": [
+      {
+        "id": 598997,
+        "inn": "<strong>4028051108</strong>",
+        "shortName": "ООО \"МОТОРИКА\"",
+        "ogrn": "1124028002273",
+        "index": "248007",
+        "region": "КАЛУЖСКАЯ",
+        "district": null,
+        "city": "КАЛУГА",
+        "settlement": null,
+        "street": "ВИШНЕВСКОГО",
+        "house": "17",
+        "building": null,
+        "office": "55",
+        "okved2": "71.12",
+        "okopf": 12300,
+        "okato": null,
+        "okpo": null,
+        "okfs": null,
+        "statusCode": "ACTIVE",
+        "statusDate": "2012-04-20",
+        "hasKfo": false,
+        "bfo": {
+          "period": "2025",
+          "actualBfoDate": "2026-03-31",
+          "gainSum": null,
+          "knd": "0710096",
+          "hasAz": false,
+          "hasKs": false,
+          "actualCorrectionNumber": 0,
+          "actualCorrectionDate": "2026-03-31",
+          "isCb": false,
+          "bfoPeriodTypes": [
+            12
+          ]
+        }
+      }
+    ],
+    "pageable": {
+      "pageNumber": 0,
+      "pageSize": 20,
+      "sort": {
+        "unsorted": true,
+        "sorted": false,
+        "empty": true
+      },
+      "offset": 0,
+      "paged": true,
+      "unpaged": false
+    },
+    "totalPages": 1,
+    "totalElements": 1,
+    "last": true,
+    "first": true,
+    "numberOfElements": 1,
+    "size": 20,
+    "number": 0,
+    "sort": {
+      "unsorted": true,
+      "sorted": false,
+      "empty": true
+    },
+    "empty": false
+  },
+  "organization": {
+    "id": 598997,
+    "inn": "4028051108",
+    "ogrn": "1124028002273"
+  },
+  "reports": [
+    {
+      "period": "2024",
+      "organizationInfo": {
+        "inn": "4028051108"
+      },
+      "typeCorrections": [
+        {
+          "type": 12,
+          "correction": {
+            "id": 52508317,
+            "balance": {
+              "id": 52508317,
+              "okud": "0710001",
+              "current1250": 111.0,
+              "previous1250": 5.0,
+              "current1300": 40.0,
+              "previous1300": 4.0,
+              "current1410": null,
+              "current1510": null,
+              "current1520": 71.0,
+              "previous1520": 1.0,
+              "current1600": 111.0,
+              "previous1600": 5.0,
+              "beforePrevious1600": 0.0,
+              "current1700": 111.0,
+              "previous1700": 5.0,
+              "beforePrevious1700": 0.0
+            },
+            "financialResult": {
+              "id": 52508317,
+              "okud": "0710002",
+              "current2350": 9.0,
+              "previous2350": 1.0,
+              "current2410": 10.0,
+              "previous2410": 1.0,
+              "current2400": 36.0,
+              "previous2400": 4.0,
+              "current2110": 170.0,
+              "previous2110": 86.0,
+              "current2120": 115.0,
+              "previous2120": 80.0
+            },
+            "correctionVersion": 1,
+            "datePresent": "2025-03-31T00:00:00"
+          }
+        }
+      ],
+      "publishedCorrectionDate": "2025-04-01",
+      "isCb": false
+    },
+    {
+      "period": "2025",
+      "organizationInfo": {
+        "inn": "4028051108"
+      },
+      "typeCorrections": [
+        {
+          "type": 12,
+          "correction": {
+            "id": 56647881,
+            "balance": {
+              "id": 56647881,
+              "okud": "0710001",
+              "current1410": null,
+              "current1510": null,
+              "current1600": 0.0,
+              "previous1600": 0.0,
+              "beforePrevious1600": 0.0,
+              "current1700": 0.0,
+              "previous1700": 0.0,
+              "beforePrevious1700": 0.0
+            },
+            "correctionVersion": 0,
+            "datePresent": "2026-03-31T10:17:06"
+          }
+        }
+      ],
+      "publishedCorrectionDate": "2026-04-03",
+      "isCb": false
+    }
+  ]
+}

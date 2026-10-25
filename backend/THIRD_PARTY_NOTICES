@@ -1,0 +1,16 @@
+Public data sources (queried over HTTPS, no API keys):
+- Federal Tax Service of Russia, EGRUL/EGRIP: https://egrul.nalog.ru/
+- Federal Tax Service of Russia, Transparent Business: https://pb.nalog.ru/
+The returned data and PDF documents originate from FNS; this project does not
+claim authorship of registry content. Source dates and raw responses are kept.
+
+Runtime components and pinned versions: see requirements.txt.
+- pdfplumber: PDF text/table extraction, https://github.com/jsvine/pdfplumber
+- pdfminer.six: PDF parser, https://github.com/pdfminer/pdfminer.six
+- Pillow: image support, https://python-pillow.org/
+- pypdfium2: PDFium bindings, https://github.com/pypdfium2-team/pypdfium2
+- charset-normalizer, cryptography, cffi, pycparser: transitive dependencies.
+Their upstream license files are included in the respective distributions.
+
+No LLMs, external paid APIs or purchased datasets are used.
+Network substitutes and the synthetic PDF in tests are test fixtures only.
