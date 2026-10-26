@@ -16,3 +16,8 @@ backend/.cache
 **/*.sqlite3
 **/*.log
 **/node_modules
+**/venv
+**/*.py[cod]
+**/*.egg-info
+**/.ruff_cache
+**/*.zip
