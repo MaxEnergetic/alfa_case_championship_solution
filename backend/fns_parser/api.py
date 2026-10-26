@@ -11,6 +11,7 @@ from fastapi import FastAPI, Path as ApiPath, Query, Request, Response
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
+from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
 from .api_models import ApiError, HealthResponse, ParserResult
@@ -178,6 +179,10 @@ def create_app(settings: ApiSettings | None = None) -> FastAPI:
             return error_response(500, "internal_error", "Внутренняя ошибка парсера")
         finally:
             slots.release()
+
+    frontend_dir = Path(os.getenv("ALFA_FRONTEND_DIR", str(Path(__file__).resolve().parents[2] / "frontend")))
+    if frontend_dir.is_dir():
+        app.mount("/", StaticFiles(directory=frontend_dir, html=True), name="frontend")
 
     return app
 
