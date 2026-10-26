@@ -14,8 +14,8 @@ class Progress:
     next_question: Question | None
 
 
-def replay(entries: list[dict], today: date) -> Progress:
-    flow = questions(today)
+def replay(entries: list[dict], today: date, version: int = 1) -> Progress:
+    flow = questions(today, version)
     question = next(flow)
     answers = {"today": today}
     answered = []
@@ -39,13 +39,14 @@ def replay(entries: list[dict], today: date) -> Progress:
 
 def submit(record: dict, field_id: str, value):
     today = date.fromisoformat(record["date"])
-    progress = replay(record["entries"], today)
+    version = record.get('flow_version', 1)
+    progress = replay(record["entries"], today, version)
     active = progress.answered + ([progress.next_question] if progress.next_question else [])
     index = next((i for i, q in enumerate(active) if q.id == field_id), None)
     if index is None:
         raise CreditError(409, "unexpected_question", "Можно ответить на текущий вопрос или исправить уже заданный")
     entries = record["entries"][:index] + [{"id": field_id, "value": value}]
-    changed = replay(entries, today)  # Validation happens before any persisted mutation.
+    changed = replay(entries, today, version)  # Validation happens before any persisted mutation.
     normalized = changed.answers[field_id]
     entries[-1]["value"] = normalized.isoformat() if isinstance(normalized, date) else normalized
     if index < len(record["entries"]) and entries[-1] == record["entries"][index]:

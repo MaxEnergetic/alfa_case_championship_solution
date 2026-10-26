@@ -1,0 +1,7 @@
+-r requirements-scoring.txt
+# Transitive scoring dependencies, fixed for reproducible container installs.
+python-dateutil==3.0.0
+pytz==2026.5
+tzdata==2026.5
+six==1.17.0
+threadpoolctl==3.7.0

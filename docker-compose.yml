@@ -1,45 +1,28 @@
-# Запуск всего стенда: docker compose up --build  →  http://localhost:8080
-name: alfa-credit-cabinet
-
+name: alfa-credit-real
 services:
-  mocks:
-    build: { context: ., dockerfile: services/mocks/Dockerfile }
+  fns-parser:
+    build: { context: ./backend }
     restart: unless-stopped
-
-  scoring:
-    build: { context: ., dockerfile: services/scoring/Dockerfile }
-    restart: unless-stopped
-
+    volumes:
+      - parser-data:/app/data
   applications:
     build: { context: ., dockerfile: services/applications/Dockerfile }
     restart: unless-stopped
     environment:
-      MOCKS_URL: http://mocks:8000
-      SCORING_URL: http://scoring:8000
-      DEMO_PASSWORD: ${DEMO_PASSWORD:-alfa2026}
-      STEP_SECONDS: ${STEP_SECONDS:-2.5}
-      CORS_ORIGINS: ""
+      PARSER_URL: http://fns-parser:8000
+      INITIAL_EMAIL: ${INITIAL_EMAIL:-user@local.test}
+      INITIAL_PASSWORD: ${INITIAL_PASSWORD:-local-change-me}
     volumes:
-      - applications-data:/data
+      - accounts-data:/data
     depends_on:
-      mocks: { condition: service_healthy }
-      scoring: { condition: service_healthy }
-
+      fns-parser: { condition: service_healthy }
   frontend:
     build: { context: ., dockerfile: frontend/Dockerfile }
     restart: unless-stopped
     ports:
-      - "${WEB_PORT:-8080}:8080"
+      - "127.0.0.1:${WEB_PORT:-8080}:8080"
     depends_on:
       applications: { condition: service_healthy }
-
-  # Адаптер реальных источников (ЕГРЮЛ/ЕГРИП, «Прозрачный бизнес», ГИР БО). По условиям кейса в демо выключен.
-  # Включить: docker compose --profile real-sources up
-  fns-parser:
-    profiles: ["real-sources"]
-    build: { context: ., dockerfile: backend/Dockerfile }
-    ports:
-      - "8000:8000"
-
 volumes:
-  applications-data:
+  accounts-data:
+  parser-data:

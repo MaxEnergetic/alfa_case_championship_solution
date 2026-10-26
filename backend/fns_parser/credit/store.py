@@ -42,11 +42,11 @@ class SessionStore:
     def dump(record):
         return json.dumps(record, ensure_ascii=False, allow_nan=False)
 
-    def create(self):
+    def create(self, flow_version=1):
         now = timestamp()
         record = {"id": secrets.token_urlsafe(32), "revision": 0, "created_at": now, "updated_at": now,
                   "date": datetime.now(MOSCOW).date().isoformat(), "entries": [],
-                  "registry": None, "selected_ogrn": None}
+                  "registry": None, "selected_ogrn": None, "flow_version": flow_version}
         with self.connection() as conn:
             conn.execute("INSERT INTO credit_sessions (id, payload) VALUES (?, ?)", (record["id"], self.dump(record)))
         return record

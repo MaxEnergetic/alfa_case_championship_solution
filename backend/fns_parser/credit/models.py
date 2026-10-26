@@ -22,6 +22,21 @@ class SubmitAnswer(Revision):
     value: StrictStr | StrictInt | StrictFloat | None = Field(..., description="Ответ; null означает «не знаю», если допустимо")
 
 
+class AnswerItem(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    question_id: str = Field(min_length=1, max_length=64)
+    value: StrictStr | StrictInt | StrictFloat | None
+
+
+class SubmitAnswers(Revision):
+    answers: list[AnswerItem] = Field(min_length=1, max_length=5)
+
+
+class CreateSession(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    flow_version: Literal[1, 2] = 1
+
+
 class AttachRegistry(Revision):
     job_id: str = Field(min_length=1, max_length=128)
     selected_ogrn: str | None = Field(None, pattern=r"^(?:[0-9]{13}|[0-9]{15})$")
@@ -144,6 +159,8 @@ class SessionView(BaseModel):
     created_at: str
     updated_at: str
     next_question: Question | None
+    question_group: list[Question] = Field(default_factory=list)
+    answered_questions: list[dict] = Field(default_factory=list)
     data: ApplicationData
     answer_states: dict[str, Literal["provided", "unknown", "derived", "registry"]] = Field(
         description="Пути полей data; отсутствие ключа означает, что поле ещё не спрашивали или пропустили по ветке")
@@ -152,6 +169,7 @@ class SessionView(BaseModel):
     recommendation: Recommendation | None
     scoring_job_id: str | None = None
     scoring: ScoringResult | None = None
+    assessment: dict | None = None
 
 
 class FieldSource(BaseModel):

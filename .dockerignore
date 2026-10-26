@@ -9,3 +9,10 @@ backend/.cache
 *.pptx
 *.pdf
 *.xlsx
+
+**/.env
+**/.env.*
+**/*.db
+**/*.sqlite3
+**/*.log
+**/node_modules

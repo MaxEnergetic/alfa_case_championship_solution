@@ -1,0 +1,13 @@
+# Only application sources and dependency manifests enter the build context.
+**
+!Dockerfile
+!.dockerignore
+!pyproject.toml
+!requirements.txt
+!requirements-scoring.txt
+!requirements-docker.txt
+!THIRD_PARTY_NOTICES
+!fns_parser/
+!fns_parser/**
+**/__pycache__/
+**/*.py[cod]

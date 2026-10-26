@@ -7,7 +7,7 @@ from fastapi import APIRouter, Depends, Query, Request, Response
 from ..api_models import ApiError
 
 from .dialogue import submit
-from .models import AttachRegistry, SessionView, SubmitAnswer
+from .models import AttachRegistry, SessionView, SubmitAnswer, SubmitAnswers, CreateSession
 from .questions import CreditError
 from .registry import attach
 from .result import view
@@ -27,8 +27,8 @@ def router(store, jobs, settings):
 
     @routes.post("", status_code=201, response_model=SessionView, response_model_exclude_unset=True,
                  summary="Создать анкету и получить первый вопрос")
-    def create():
-        return view(store.create())
+    def create(body: CreateSession | None = None):
+        return view(store.create(body.flow_version if body else 1))
 
     @routes.get("/{session_id}", response_model=SessionView, response_model_exclude_unset=True,
                 summary="Общий JSON: компания, анкета, следующий вопрос и подбор")
@@ -39,6 +39,15 @@ def router(store, jobs, settings):
                  summary="Ответить или исправить ответ; исправление сбрасывает последующие ответы")
     def answer(session_id: str, body: SubmitAnswer):
         record = store.update(session_id, body.revision, lambda r: submit(r, body.question_id, body.value))
+        return view(record)
+
+    @routes.post("/{session_id}/answers/batch", response_model=SessionView, response_model_exclude_unset=True,
+                 summary="Сохранить связанный блок ответов атомарно")
+    def answers(session_id: str, body: SubmitAnswers):
+        def mutate(record):
+            for item in body.answers:
+                submit(record, item.question_id, item.value)
+        record = store.update(session_id, body.revision, mutate)
         return view(record)
 
     @routes.post("/{session_id}/registry", response_model=SessionView, response_model_exclude_unset=True,

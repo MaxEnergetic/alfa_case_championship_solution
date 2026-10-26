@@ -1,46 +1,35 @@
 {
   "info": {
-    "name": "Умный кредитный кабинет — API",
-    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
-    "description": "Сквозной сценарий через nginx (http://localhost:8080). Для ручной проверки подставьте manualAppId заявки компании 9900000031."
+    "name": "Real company recommendations",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{token}}",
+        "type": "string"
+      }
+    ]
   },
   "variable": [
     {
       "key": "baseUrl",
-      "value": "http://localhost:8080"
+      "value": "http://127.0.0.1:8080"
     },
     {
-      "key": "token",
-      "value": ""
+      "key": "email",
+      "value": "user@local.test"
     },
     {
-      "key": "appId",
-      "value": ""
-    },
-    {
-      "key": "manualAppId",
-      "value": ""
+      "key": "password",
+      "value": "local-change-me"
     }
   ],
   "item": [
     {
-      "name": "Health",
-      "request": {
-        "method": "GET",
-        "header": [],
-        "url": {
-          "raw": "{{baseUrl}}/health",
-          "host": [
-            "{{baseUrl}}"
-          ],
-          "path": [
-            "health"
-          ]
-        }
-      }
-    },
-    {
-      "name": "Вход клиента",
+      "name": "Login",
       "request": {
         "method": "POST",
         "header": [
@@ -49,21 +38,13 @@
             "value": "application/json"
           }
         ],
-        "url": {
-          "raw": "{{baseUrl}}/api/v1/auth/login",
-          "host": [
-            "{{baseUrl}}"
-          ],
-          "path": [
-            "api",
-            "v1",
-            "auth",
-            "login"
-          ]
-        },
+        "url": "{{baseUrl}}/api/v1/auth/login",
         "body": {
           "mode": "raw",
-          "raw": "{\n  \"email\": \"client@demo.alfa.ru\",\n  \"password\": \"alfa2026\",\n  \"role\": \"client\"\n}"
+          "raw": "{\n  \"email\": \"{{email}}\",\n  \"password\": \"{{password}}\"\n}"
+        },
+        "auth": {
+          "type": "noauth"
         }
       },
       "event": [
@@ -72,44 +53,52 @@
           "script": {
             "type": "text/javascript",
             "exec": [
-              "pm.test('200', () => pm.response.to.have.status(200));",
-              "pm.collectionVariables.set('token', pm.response.json().token);"
+              "pm.environment.set('token', pm.response.json().token);"
             ]
           }
         }
       ]
     },
     {
-      "name": "Карточка компании по ИНН (моки ЕГРЮЛ/ФНС/ФССП)",
+      "name": "Create questionnaire",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "url": "{{baseUrl}}/api/v1/credit/sessions"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "const x=pm.response.json();pm.environment.set('session',x.session_id);pm.environment.set('revision',x.revision);"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Current questionnaire",
       "request": {
         "method": "GET",
         "header": [],
-        "url": {
-          "raw": "{{baseUrl}}/api/v1/companies/990000000299",
-          "host": [
-            "{{baseUrl}}"
-          ],
-          "path": [
-            "api",
-            "v1",
-            "companies",
-            "990000000299"
-          ]
-        },
-        "auth": {
-          "type": "bearer",
-          "bearer": [
-            {
-              "key": "token",
-              "value": "{{token}}",
-              "type": "string"
-            }
-          ]
+        "url": "{{baseUrl}}/api/v1/credit/sessions/{{session}}"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.environment.set('revision',pm.response.json().revision);"
+            ]
+          }
         }
-      }
+      ]
     },
     {
-      "name": "Создать черновик",
+      "name": "Answer next question (update question_id and value)",
       "request": {
         "method": "POST",
         "header": [
@@ -118,30 +107,10 @@
             "value": "application/json"
           }
         ],
-        "url": {
-          "raw": "{{baseUrl}}/api/v1/applications",
-          "host": [
-            "{{baseUrl}}"
-          ],
-          "path": [
-            "api",
-            "v1",
-            "applications"
-          ]
-        },
-        "auth": {
-          "type": "bearer",
-          "bearer": [
-            {
-              "key": "token",
-              "value": "{{token}}",
-              "type": "string"
-            }
-          ]
-        },
+        "url": "{{baseUrl}}/api/v1/credit/sessions/{{session}}/answers",
         "body": {
           "mode": "raw",
-          "raw": "{}"
+          "raw": "{\n  \"revision\": {{revision}},\n  \"question_id\": \"knowledge\",\n  \"value\": \"no\"\n}"
         }
       },
       "event": [
@@ -150,175 +119,43 @@
           "script": {
             "type": "text/javascript",
             "exec": [
-              "pm.collectionVariables.set('appId', pm.response.json().id);"
+              "pm.environment.set('revision',pm.response.json().revision);"
             ]
           }
         }
       ]
     },
     {
-      "name": "Сохранить анкету",
+      "name": "Purchase amounts (when question_group is present)",
       "request": {
-        "method": "PUT",
+        "method": "POST",
         "header": [
           {
             "key": "Content-Type",
             "value": "application/json"
           }
         ],
-        "url": {
-          "raw": "{{baseUrl}}/api/v1/applications/{{appId}}",
-          "host": [
-            "{{baseUrl}}"
-          ],
-          "path": [
-            "api",
-            "v1",
-            "applications",
-            "{{appId}}"
-          ]
-        },
-        "auth": {
-          "type": "bearer",
-          "bearer": [
-            {
-              "key": "token",
-              "value": "{{token}}",
-              "type": "string"
-            }
-          ]
-        },
+        "url": "{{baseUrl}}/api/v1/credit/sessions/{{session}}/answers/batch",
         "body": {
           "mode": "raw",
-          "raw": "{\n  \"form\": {\n    \"purpose\": \"equipment\",\n    \"moneyUse\": \"all\",\n    \"amount\": 3000000,\n    \"term\": 18,\n    \"maxTerm\": 18,\n    \"collateral\": \"none\",\n    \"tin\": \"990000000299\",\n    \"applicantName\": \"Смирнов Алексей Викторович\",\n    \"applicantRole\": \"owner\",\n    \"monthlyRevenue\": 450000,\n    \"currentPayments\": 0,\n    \"consentBki\": true,\n    \"consentPrivacy\": true\n  },\n  \"wizardStage\": \"consent\",\n  \"wizardIndex\": 4\n}"
+          "raw": "{\n  \"revision\": {{revision}},\n  \"answers\": [\n    {\"question_id\":\"asset_cost\",\"value\":5000000},\n    {\"question_id\":\"amount\",\"value\":3000000}\n  ]\n}"
         }
       }
     },
     {
-      "name": "Отправить заявку",
+      "name": "Real FNS lookup",
       "request": {
         "method": "POST",
-        "header": [],
-        "url": {
-          "raw": "{{baseUrl}}/api/v1/applications/{{appId}}/submit",
-          "host": [
-            "{{baseUrl}}"
-          ],
-          "path": [
-            "api",
-            "v1",
-            "applications",
-            "{{appId}}",
-            "submit"
-          ]
-        },
-        "auth": {
-          "type": "bearer",
-          "bearer": [
-            {
-              "key": "token",
-              "value": "{{token}}",
-              "type": "string"
-            }
-          ]
-        }
-      }
-    },
-    {
-      "name": "Статус заявки (опрашивать до needs_docs)",
-      "request": {
-        "method": "GET",
-        "header": [],
-        "url": {
-          "raw": "{{baseUrl}}/api/v1/applications/{{appId}}",
-          "host": [
-            "{{baseUrl}}"
-          ],
-          "path": [
-            "api",
-            "v1",
-            "applications",
-            "{{appId}}"
-          ]
-        },
-        "auth": {
-          "type": "bearer",
-          "bearer": [
-            {
-              "key": "token",
-              "value": "{{token}}",
-              "type": "string"
-            }
-          ]
-        }
-      }
-    },
-    {
-      "name": "Загрузить выписку PDF",
-      "request": {
-        "method": "POST",
-        "header": [],
-        "url": {
-          "raw": "{{baseUrl}}/api/v1/applications/{{appId}}/documents",
-          "host": [
-            "{{baseUrl}}"
-          ],
-          "path": [
-            "api",
-            "v1",
-            "applications",
-            "{{appId}}",
-            "documents"
-          ]
-        },
-        "auth": {
-          "type": "bearer",
-          "bearer": [
-            {
-              "key": "token",
-              "value": "{{token}}",
-              "type": "string"
-            }
-          ]
-        },
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{baseUrl}}/api/v1/credit/sessions/{{session}}/registry/jobs",
         "body": {
-          "mode": "formdata",
-          "formdata": [
-            {
-              "key": "file",
-              "type": "file",
-              "src": "statement.pdf"
-            }
-          ]
-        }
-      }
-    },
-    {
-      "name": "Статус заявки (ждём counteroffer)",
-      "request": {
-        "method": "GET",
-        "header": [],
-        "url": {
-          "raw": "{{baseUrl}}/api/v1/applications/{{appId}}",
-          "host": [
-            "{{baseUrl}}"
-          ],
-          "path": [
-            "api",
-            "v1",
-            "applications",
-            "{{appId}}"
-          ]
-        },
-        "auth": {
-          "type": "bearer",
-          "bearer": [
-            {
-              "key": "token",
-              "value": "{{token}}",
-              "type": "string"
-            }
-          ]
+          "mode": "raw",
+          "raw": "{\n  \"identifier\": \"5505223431\",\n  \"full\": false,\n  \"enrich\": true\n}"
         }
       },
       "event": [
@@ -327,102 +164,41 @@
           "script": {
             "type": "text/javascript",
             "exec": [
-              "pm.test('решение', () => pm.expect(['counteroffer','approved','manual_review','declined','enrichment','scoring']).to.include(pm.response.json().status));"
+              "pm.environment.set('job',pm.response.json().job_id);"
             ]
           }
         }
       ]
     },
     {
-      "name": "Принять предложение",
-      "request": {
-        "method": "POST",
-        "header": [],
-        "url": {
-          "raw": "{{baseUrl}}/api/v1/applications/{{appId}}/accept",
-          "host": [
-            "{{baseUrl}}"
-          ],
-          "path": [
-            "api",
-            "v1",
-            "applications",
-            "{{appId}}",
-            "accept"
-          ]
-        },
-        "auth": {
-          "type": "bearer",
-          "bearer": [
-            {
-              "key": "token",
-              "value": "{{token}}",
-              "type": "string"
-            }
-          ]
-        }
-      }
-    },
-    {
-      "name": "Подписать договор (имитация)",
-      "request": {
-        "method": "POST",
-        "header": [],
-        "url": {
-          "raw": "{{baseUrl}}/api/v1/applications/{{appId}}/sign",
-          "host": [
-            "{{baseUrl}}"
-          ],
-          "path": [
-            "api",
-            "v1",
-            "applications",
-            "{{appId}}",
-            "sign"
-          ]
-        },
-        "auth": {
-          "type": "bearer",
-          "bearer": [
-            {
-              "key": "token",
-              "value": "{{token}}",
-              "type": "string"
-            }
-          ]
-        }
-      }
-    },
-    {
-      "name": "Мои заявки",
+      "name": "Job status",
       "request": {
         "method": "GET",
         "header": [],
-        "url": {
-          "raw": "{{baseUrl}}/api/v1/applications",
-          "host": [
-            "{{baseUrl}}"
-          ],
-          "path": [
-            "api",
-            "v1",
-            "applications"
-          ]
-        },
-        "auth": {
-          "type": "bearer",
-          "bearer": [
-            {
-              "key": "token",
-              "value": "{{token}}",
-              "type": "string"
-            }
-          ]
+        "url": "{{baseUrl}}/api/v1/jobs/{{job}}"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "const x=pm.response.json();if(x.captcha)pm.environment.set('captcha',x.captcha.id);"
+            ]
+          }
         }
+      ]
+    },
+    {
+      "name": "CAPTCHA image",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": "{{baseUrl}}/api/v1/jobs/{{job}}/captchas/{{captcha}}/image"
       }
     },
     {
-      "name": "Вход сотрудника",
+      "name": "Human CAPTCHA answer (enter code)",
       "request": {
         "method": "POST",
         "header": [
@@ -431,21 +207,27 @@
             "value": "application/json"
           }
         ],
-        "url": {
-          "raw": "{{baseUrl}}/api/v1/auth/login",
-          "host": [
-            "{{baseUrl}}"
-          ],
-          "path": [
-            "api",
-            "v1",
-            "auth",
-            "login"
-          ]
-        },
+        "url": "{{baseUrl}}/api/v1/jobs/{{job}}/captchas/{{captcha}}/answer",
         "body": {
           "mode": "raw",
-          "raw": "{\n  \"email\": \"manager@demo.alfa.ru\",\n  \"password\": \"alfa2026\",\n  \"role\": \"staff\"\n}"
+          "raw": "{\n  \"action\": \"answer\",\n  \"code\": \"{{code}}\"\n}"
+        }
+      }
+    },
+    {
+      "name": "Attach registry (INN must match questionnaire)",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{baseUrl}}/api/v1/credit/sessions/{{session}}/registry",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"revision\": {{revision}},\n  \"job_id\": \"{{job}}\"\n}"
         }
       },
       "event": [
@@ -454,42 +236,14 @@
           "script": {
             "type": "text/javascript",
             "exec": [
-              "pm.collectionVariables.set('token', pm.response.json().token);"
+              "pm.environment.set('revision',pm.response.json().revision);"
             ]
           }
         }
       ]
     },
     {
-      "name": "Очередь: все заявки",
-      "request": {
-        "method": "GET",
-        "header": [],
-        "url": {
-          "raw": "{{baseUrl}}/api/v1/applications",
-          "host": [
-            "{{baseUrl}}"
-          ],
-          "path": [
-            "api",
-            "v1",
-            "applications"
-          ]
-        },
-        "auth": {
-          "type": "bearer",
-          "bearer": [
-            {
-              "key": "token",
-              "value": "{{token}}",
-              "type": "string"
-            }
-          ]
-        }
-      }
-    },
-    {
-      "name": "Решение сотрудника по ручной проверке",
+      "name": "Financial assessment",
       "request": {
         "method": "POST",
         "header": [
@@ -498,33 +252,38 @@
             "value": "application/json"
           }
         ],
-        "url": {
-          "raw": "{{baseUrl}}/api/v1/applications/{{manualAppId}}/staff-decision",
-          "host": [
-            "{{baseUrl}}"
-          ],
-          "path": [
-            "api",
-            "v1",
-            "applications",
-            "{{manualAppId}}",
-            "staff-decision"
-          ]
-        },
-        "auth": {
-          "type": "bearer",
-          "bearer": [
-            {
-              "key": "token",
-              "value": "{{token}}",
-              "type": "string"
-            }
-          ]
-        },
+        "url": "{{baseUrl}}/api/v1/credit/sessions/{{session}}/scoring/jobs",
         "body": {
           "mode": "raw",
-          "raw": "{\n  \"kind\": \"counteroffer\",\n  \"amount\": 1500000,\n  \"months\": 24\n}"
+          "raw": "{\n  \"revision\": {{revision}}\n}"
         }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.environment.set('job',pm.response.json().job_id);"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Ready combined JSON",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": "{{baseUrl}}/api/v1/credit/sessions/{{session}}/result"
+      }
+    },
+    {
+      "name": "Logout",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "url": "{{baseUrl}}/api/v1/auth/logout"
       }
     }
   ]

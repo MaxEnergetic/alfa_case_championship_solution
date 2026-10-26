@@ -4,6 +4,8 @@ from dataclasses import asdict
 from datetime import date
 
 from .dialogue import replay
+from .assessment import combined
+from .flow import purchase_amount_question
 from .models import (ApplicationData, BankRelationship, Borrower, ExistingLoan, Financials,
                      Financing, Security, SessionView)
 from .registry import authoritative_answers, selected_entity
@@ -49,7 +51,7 @@ def assessment(answers, record):
 
 
 def view(record):
-    progress = replay(record["entries"], date.fromisoformat(record["date"]))
+    progress = replay(record["entries"], date.fromisoformat(record["date"]), record.get('flow_version', 1))
     declared = progress.answers
     facts = authoritative_answers(record)
     effective = {**declared, **facts}
@@ -78,10 +80,17 @@ def view(record):
         sources[path] = {"source": "fns_parser", "checked_at": registry.get("checked_at"), "ogrn": record["selected_ogrn"]}
         if key in declared and declared[key] not in (None, "unknown", value):
             conflicts.append({"field": path, "user_value": declared[key], "registry_value": value, "chosen_source": "fns_parser"})
+    recommendation = None if progress.next_question else assessment(effective, record)
+    question_group = []
+    if record.get('flow_version', 1) >= 2 and progress.next_question and progress.next_question.id == 'asset_cost':
+        question_group = [progress.next_question, purchase_amount_question()]
     return SessionView(schema_version="credit-application-1.0", session_id=record["id"], revision=record["revision"],
                        state="collecting" if progress.next_question else "ready",
                        created_at=record["created_at"], updated_at=record["updated_at"],
-                       next_question=progress.next_question, data=ApplicationData.model_validate(data),
+                       next_question=progress.next_question, question_group=question_group, data=ApplicationData.model_validate(data),
+                       answered_questions=[{"question": q.model_dump(mode="json"), "value": declared.get(q.id)}
+                                           for q in progress.answered],
                        answer_states=states, field_sources=sources, conflicts=conflicts,
                        scoring_job_id=record.get('scoring_job_id'), scoring=record.get('scoring'),
-                       recommendation=None if progress.next_question else assessment(effective, record))
+                       recommendation=recommendation,
+                       assessment=combined(recommendation, record.get('scoring'), exposed('inn')))

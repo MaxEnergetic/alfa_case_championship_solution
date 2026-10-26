@@ -6,7 +6,11 @@ from .questions import Question, choice, yn, number, text, day
 from .rules import PRODUCTS, BUSINESS_FORMS, LEGAL_FORMS
 
 
-def questions(today: date) -> Generator[Question, Any, dict[str, Any]]:
+def purchase_amount_question():
+    return number('amount', 'Q21', 'Из этой стоимости хотите взять в кредит, ₽', minimum=1)
+
+
+def questions(today: date, version: int = 1) -> Generator[Question, Any, dict[str, Any]]:
     a: dict[str, Any] = {'today': today}
     a['knowledge'] = (yield choice('knowledge', 'Q01', 'Вы уже знаете, какой кредит хотите?', [('yes', 'Да, знаю'), ('no', 'Нет, помогите выбрать'), ('compare', 'Есть вариант, хочу сравнить')]))
     if a['knowledge'] != 'no':
@@ -45,6 +49,8 @@ def questions(today: date) -> Generator[Question, Any, dict[str, Any]]:
     if a['goal'] == 'startup':
         a['startup_costs'] = (yield text('startup_costs', 'Q10a', 'Что финансируем при запуске: товар, помещение, оборудование, транспорт?'))
         a['asset_cost'] = (yield number('asset_cost', 'Q10a', 'Общий бюджет запуска, ₽', minimum=1))
+    if version >= 2 and 'asset_cost' in a:
+        a['amount'] = (yield purchase_amount_question())
     a['registered'] = (yield choice('registered', 'Q11', 'Зарегистрированы ИП или юридическое лицо?', [('yes', 'Да'), ('pending', 'Регистрация в процессе'), ('no', 'Нет')]))
     a['form'] = (yield choice('form', 'Q12', 'В какой форме работаете?', [('ip', 'ИП'), ('ooo', 'ООО'), ('other_legal', 'Другая организация'), ('self_employed', 'Самозанятый без ИП'), ('none', 'Пока без регистрации')]))
     if a['form'] in BUSINESS_FORMS:
@@ -67,7 +73,8 @@ def questions(today: date) -> Generator[Question, Any, dict[str, Any]]:
                 a['subscription_target'] = (yield choice('subscription_target', 'Q20', 'К какому продукту относится подписка?', [('overdraft', 'Овердрафт'), ('line', 'Возобновляемая линия'), ('other', 'Другой кредит'), ('unknown', 'Не знаю')]))
                 a['subscription_valid'] = (yield yn('subscription_valid', 'Q20', 'Подтверждены срок действия и применимость к этому предложению?'))
                 a['subscription_details'] = (yield text('subscription_details', 'Q20', 'Укажите срок действия, стоимость и условия подписки.'))
-    a['amount'] = (yield number('amount', 'Q21', 'Какая сумма нужна, ₽?', minimum=1))
+    if 'amount' not in a:
+        a['amount'] = (yield number('amount', 'Q21', 'Какая сумма нужна, ₽?', minimum=1))
     a['needed_date'] = (yield day('needed_date', 'Q22', 'Когда нужны деньги?'))
     if a['goal'] == 'stock':
         a['disbursement'] = (yield choice('disbursement', 'Q23', 'Деньги нужны сразу или частями?', [('once', 'Сразу'), ('parts', 'Частями'), ('unknown', 'Не знаю')]))
