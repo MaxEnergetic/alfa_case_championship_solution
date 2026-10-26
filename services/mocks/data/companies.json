@@ -1,0 +1,87 @@
+{
+  "_comment": "Синтетические демо-компании. ИНН, названия, ФИО и цифры выдуманы и не относятся к реальным лицам. Суммы отчётности — тыс. руб., как в ГИР БО / RFSD.",
+  "companies": {
+    "9900000017": {
+      "egrul": {
+        "inn": "9900000017", "ogrn": "1219900000017", "name": "ООО «Север Логистик»", "legal_type": "ООО",
+        "status": "Действующая", "registered_on": "2021-03-14", "region": "Москва",
+        "okved": "49.41", "okved_name": "Грузовые перевозки и логистика", "director": "Смирнов Алексей Викторович"
+      },
+      "fns": {
+        "tax_debt_rub": 0, "employees": 38, "tax_regime": "ОСНО",
+        "statements": {"year": 2025, "units": "thousand_RUB",
+          "lines": {"1200": 11000, "1250": 3500, "1300": 11000, "1400": 1500, "1500": 3500, "1600": 16000, "1700": 16000,
+                    "2110": 24000, "2200": 3200, "2330": 100, "2400": 2500}}
+      },
+      "fssp": {"debt_rub": 0, "court_cases_as_defendant": 0},
+      "bki": {"credit_history": "clear", "active_loans": 0, "monthly_payments_rub": 0}
+    },
+    "990000000299": {
+      "egrul": {
+        "inn": "990000000299", "ogrn": "324990000000299", "name": "ИП «Зерно»", "legal_type": "ИП",
+        "status": "Действующий", "registered_on": "2024-06-02", "region": "Санкт-Петербург",
+        "okved": "56.10", "okved_name": "Кофейни и общественное питание", "director": "Смирнов Алексей Викторович"
+      },
+      "fns": {"tax_debt_rub": 0, "employees": 4, "tax_regime": "УСН", "statements": null},
+      "fssp": {"debt_rub": 0, "court_cases_as_defendant": 0},
+      "bki": {"credit_history": "clear", "active_loans": 0, "monthly_payments_rub": 0},
+      "declared_monthly_revenue_rub": 450000
+    },
+    "9900000031": {
+      "egrul": {
+        "inn": "9900000031", "ogrn": "1249900000031", "name": "ООО «Мастерская Ремонт»", "legal_type": "ООО",
+        "status": "Действующая", "registered_on": "2024-09-18", "region": "Казань",
+        "okved": "33.12", "okved_name": "Ремонт оборудования и помещений", "director": "Смирнов Алексей Викторович"
+      },
+      "fns": {
+        "tax_debt_rub": 150000, "employees": 12, "tax_regime": "УСН",
+        "statements": {"year": 2025, "units": "thousand_RUB",
+          "lines": {"1200": 2800, "1250": 180, "1300": 50, "1400": 1500, "1500": 3800, "1600": 5350, "1700": 5350,
+                    "2110": 14400, "2200": 200, "2330": 400, "2400": -20}}
+      },
+      "fssp": {"debt_rub": 0, "court_cases_as_defendant": 2},
+      "bki": {"credit_history": "closed_overdue", "active_loans": 1, "monthly_payments_rub": 0}
+    },
+    "990000000436": {
+      "egrul": {
+        "inn": "990000000436", "ogrn": "326990000000436", "name": "ИП «Цветы у дома»", "legal_type": "ИП",
+        "status": "Действующий", "registered_on": "2026-02-12", "region": "Екатеринбург",
+        "okved": "47.76", "okved_name": "Розничная торговля цветами", "director": "Смирнов Алексей Викторович"
+      },
+      "fns": {"tax_debt_rub": 0, "employees": 2, "tax_regime": "Патент", "statements": null},
+      "fssp": {"debt_rub": 0, "court_cases_as_defendant": 0},
+      "bki": {"credit_history": "clear", "active_loans": 0, "monthly_payments_rub": 0},
+      "declared_monthly_revenue_rub": 700000
+    },
+    "9900000056": {
+      "egrul": {
+        "inn": "9900000056", "ogrn": "1199900000056", "name": "ООО «Вектор Строй»", "legal_type": "ООО",
+        "status": "В стадии ликвидации", "registered_on": "2019-07-30", "region": "Новосибирск",
+        "okved": "41.20", "okved_name": "Строительство нежилых зданий", "director": "Смирнов Алексей Викторович"
+      },
+      "fns": {
+        "tax_debt_rub": 0, "employees": 25, "tax_regime": "ОСНО",
+        "statements": {"year": 2025, "units": "thousand_RUB",
+          "lines": {"1200": 15000, "1250": 1500, "1300": 9000, "1400": 6000, "1500": 12000, "1600": 27000, "1700": 27000,
+                    "2110": 38000, "2200": 2500, "2330": 900, "2400": 1400}}
+      },
+      "fssp": {"debt_rub": 0, "court_cases_as_defendant": 0},
+      "bki": {"credit_history": "clear", "active_loans": 0, "monthly_payments_rub": 0}
+    },
+    "9900000063": {
+      "egrul": {
+        "inn": "9900000063", "ogrn": "1259900000063", "name": "ООО «Быстрый старт»", "legal_type": "ООО",
+        "status": "Действующая", "registered_on": "2025-10-09", "region": "Самара",
+        "okved": "46.49", "okved_name": "Оптовая торговля хозяйственными товарами", "director": "Смирнов Алексей Викторович"
+      },
+      "fns": {
+        "tax_debt_rub": 0, "employees": 3, "tax_regime": "УСН",
+        "statements": {"year": 2025, "units": "thousand_RUB",
+          "lines": {"1200": 800, "1250": 30, "1300": -900, "1400": 400, "1500": 2200, "1600": 1700, "1700": 1700,
+                    "2110": 3600, "2200": -500, "2330": 120, "2400": -700}}
+      },
+      "fssp": {"debt_rub": 0, "court_cases_as_defendant": 1},
+      "bki": {"credit_history": "current_overdue", "active_loans": 2, "monthly_payments_rub": 90000}
+    }
+  }
+}

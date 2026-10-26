@@ -1,0 +1,35 @@
+THIRD_PARTY_NOTICES — Умный кредитный кабинет предпринимателя (команда «Sanek»)
+
+Проверяемая версия не использует платные API, подписки, покупные данные, закрытые лицензии и LLM.
+Все данные о клиентах, компаниях, заявках и финансах в демо — синтетические.
+
+1. Смоделированные интеграции (сервис services/mocks, локальные моки)
+   - ЕГРЮЛ / ЕГРИП (ФНС России) — регистрационные сведения: GET /egrul/{inn}
+   - ФНС «Прозрачный бизнес» + ГИР БО — налоговый долг, режим, бухотчётность: GET /fns/{inn}
+   - ФССП / Картотека арбитражных дел — исполнительные производства, суды: GET /fssp/{inn}
+   - Бюро кредитных историй — кредитная история (только после согласия по 218-ФЗ): GET /bki/{inn}
+   Контракты упрощены с сохранением смысла интеграции. Реальные системы Альфа-Банка не используются.
+
+2. Модель и данные для её обучения
+   - ML-модель финансовой устойчивости (логистическая регрессия) обучена командой на открытом датасете
+     RFSD — Russian Financial Statements Database (Hugging Face: irlspbru/RFSD), лицензия CC BY 4.0.
+     Атрибуция: Sergey Bondarkov, Viktor Ledenev, Dmitriy Skougarevskiy. Russian Financial Statements
+     Database. Scientific Data 12 (2025). DOI 10.1038/s41597-025-05150-1
+     Версии файлов и хеши: ML/source_manifest.json, ML/README.md. В демо модель считает только по
+     синтетической отчётности из моков; при работе стенда RFSD не запрашивается.
+
+3. Адаптер реальных публичных источников (backend/, профиль docker compose «real-sources», выключен в демо)
+   - ФНС России: ЕГРЮЛ/ЕГРИП https://egrul.nalog.ru/, «Прозрачный бизнес» https://pb.nalog.ru/, ГИР БО
+   Подробности: backend/THIRD_PARTY_NOTICES.
+
+4. Программные компоненты (точные версии — в requirements*.txt и Dockerfile)
+   - FastAPI, Starlette, Pydantic, Uvicorn, HTTPX, python-multipart — MIT / BSD
+   - NumPy, pandas, SciPy, scikit-learn, joblib — BSD
+   - pdfplumber, pdfminer.six, Pillow, pypdfium2, cryptography — MIT / HPND / Apache-2.0 / BSD (backend)
+   - nginx 1.27 (образ nginx:1.27.2-alpine) — BSD-2-Clause
+   - Python 3.12 (образ python:3.12.7-slim-bookworm) — PSF License
+   Лицензии включены в дистрибутивы соответствующих пакетов.
+
+5. Дизайн
+   - Интерфейс сверстан командой по мотивам публичной дизайн-системы Альфа-Банка
+     (https://core-ds.github.io/core-components). Компоненты и шрифты Альфа-Банка в код не включены.

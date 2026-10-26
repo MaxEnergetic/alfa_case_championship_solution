@@ -1,62 +1,42 @@
 (function () {
   "use strict";
 
-  var STORE_KEY = "alfa-credit-demo-v1";
+  var PREFS_KEY = "alfa-credit-ui-v2";
+  // Подсказка на экране входа. Проверка пароля и роль — на сервере (/api/v1/auth/login).
   var DEMO_PASSWORD = "alfa2026";
   var DEMO_ACCOUNTS = {
     client: { email: "client@demo.alfa.ru", name: "Алексей Смирнов", role: "client" },
     staff: { email: "manager@demo.alfa.ru", name: "Мария Волкова", role: "staff" }
   };
+  var API = (new URLSearchParams(location.search).get("api") || (window.APP_CONFIG && window.APP_CONFIG.apiBase) || "/api/v1").replace(/\/$/, "");
   var PRODUCTS = {
     single: { title: "Кредит одной суммой", rate: 22, minAmount: 300000, maxAmount: 30000000, minTerm: 3, maxTerm: 60, note: "Вся сумма сразу на развитие бизнеса", alt: "line" },
     secured: { title: "Кредит с залогом", rate: 19, minAmount: 500000, maxAmount: 150000000, minTerm: 12, maxTerm: 120, note: "Увеличенный лимит под залог имущества", alt: "single" },
     line: { title: "Возобновляемая кредитная линия", rate: 23, minAmount: 300000, maxAmount: 30000000, minTerm: 6, maxTerm: 18, note: "Получайте деньги частями, когда понадобится", alt: "single" },
     overdraft: { title: "Овердрафт", rate: 24, minAmount: 300000, maxAmount: 20000000, minTerm: 2, maxTerm: 12, note: "Короткий запас средств до поступления выручки", alt: "line" }
   };
+  // Только для быстрых кнопок в анкете. Сами данные компаний приходят из сервиса заявок (моки ЕГРЮЛ/ФНС/ФССП/БКИ).
   var DEMO_COMPANIES = {
-    "9900000017": {
-      tin: "9900000017", name: "ООО «Север Логистик»", legalType: "ООО", regDate: "14.03.2021", ageMonths: 67, region: "Москва",
-      activity: "Грузовые перевозки и логистика", director: "Алексей Смирнов", hasReport: true, annualRevenue: 24000000, monthlyRevenue: 2000000,
-      modelScore: 0.9, creditHistory: "clear", currentPayments: 0, taxDebt: 0, courtCases: false, bailiffDebt: 0, liquidating: false
-    },
-    "990000000299": {
-      tin: "990000000299", name: "ИП «Зерно»", legalType: "ИП", regDate: "02.06.2024", ageMonths: 28, region: "Санкт-Петербург",
-      activity: "Кофейни и общественное питание", director: "Алексей Смирнов", hasReport: false, annualRevenue: null, monthlyRevenue: 450000,
-      modelScore: null, creditHistory: "clear", currentPayments: 0, taxDebt: 0, courtCases: false, bailiffDebt: 0, liquidating: false, requiresDocs: true
-    },
-    "9900000031": {
-      tin: "9900000031", name: "ООО «Мастерская Ремонт»", legalType: "ООО", regDate: "18.09.2024", ageMonths: 25, region: "Казань",
-      activity: "Ремонт оборудования и помещений", director: "Алексей Смирнов", hasReport: true, annualRevenue: 14400000, monthlyRevenue: 1200000,
-      modelScore: 0.3, creditHistory: "closed", currentPayments: 0, taxDebt: 150000, courtCases: true, bailiffDebt: 0, liquidating: false
-    },
-    "990000000436": {
-      tin: "990000000436", name: "ИП «Цветы у дома»", legalType: "ИП", regDate: "12.02.2026", ageMonths: 8, region: "Екатеринбург",
-      activity: "Розничная торговля цветами", director: "Алексей Смирнов", hasReport: false, annualRevenue: null, monthlyRevenue: 700000,
-      modelScore: null, creditHistory: "clear", currentPayments: 0, taxDebt: 0, courtCases: false, bailiffDebt: 0, liquidating: false, requiresDocs: true
-    },
-    "9900000056": {
-      tin: "9900000056", name: "ООО «Вектор Строй»", legalType: "ООО", regDate: "30.07.2019", ageMonths: 87, region: "Новосибирск",
-      activity: "Строительство нежилых зданий", director: "Алексей Смирнов", hasReport: true, annualRevenue: 38000000, monthlyRevenue: 3166667,
-      modelScore: 0.72, creditHistory: "clear", currentPayments: 0, taxDebt: 0, courtCases: false, bailiffDebt: 0, liquidating: true
-    },
-    "9900000063": {
-      tin: "9900000063", name: "ООО «Быстрый старт»", legalType: "ООО", regDate: "09.10.2025", ageMonths: 12, region: "Самара",
-      activity: "Оптовая торговля хозяйственными товарами", director: "Алексей Смирнов", hasReport: true, annualRevenue: 3600000, monthlyRevenue: 300000,
-      modelScore: 0.1, creditHistory: "current", currentPayments: 90000, taxDebt: 0, courtCases: true, bailiffDebt: 0, liquidating: false
-    }
+    "9900000017": { name: "ООО «Север Логистик»" },
+    "990000000299": { name: "ИП «Зерно»" },
+    "9900000031": { name: "ООО «Мастерская Ремонт»" },
+    "990000000436": { name: "ИП «Цветы у дома»" },
+    "9900000056": { name: "ООО «Вектор Строй»" },
+    "9900000063": { name: "ООО «Быстрый старт»" }
   };
 
   function freshDb() {
-    return { session: null, view: "dashboard", currentAppId: null, staffAppId: null, apps: [] };
+    return { session: null, token: null, view: "dashboard", currentAppId: null, staffAppId: null, apps: [] };
   }
-  function readDb() {
+  function readPrefs() {
+    // В браузере храним только токен сессии и текущий экран; заявки живут в сервисе заявок.
     try {
-      var saved = JSON.parse(localStorage.getItem(STORE_KEY) || "null");
-      if (saved && Array.isArray(saved.apps)) return Object.assign(freshDb(), saved);
+      var saved = JSON.parse(localStorage.getItem(PREFS_KEY) || "null");
+      if (saved && saved.token) return Object.assign(freshDb(), saved, { apps: [] });
     } catch (error) {}
     return freshDb();
   }
-  var db = readDb();
+  var db = readPrefs();
   var appRoot = document.getElementById("app");
   var liveRegion = document.getElementById("live-region");
   var loginRole = "client";
@@ -64,12 +44,73 @@
   var toastTimer = null;
   var modalMarkup = "";
 
-  if (db.session && db.session.role !== "client" && db.session.role !== "staff") db.session = null;
-  if (db.session && !DEMO_ACCOUNTS[db.session.role]) db.session = null;
+  var draftTimer = null;
+  var lastSnapshot = "";
+  var loading = Boolean(db.token);
 
-  function saveDb() {
-    try { localStorage.setItem(STORE_KEY, JSON.stringify(db)); } catch (error) {}
+  function savePrefs() {
+    try {
+      localStorage.setItem(PREFS_KEY, JSON.stringify({ session: db.session, token: db.token, view: db.view, currentAppId: db.currentAppId, staffAppId: db.staffAppId }));
+    } catch (error) {}
   }
+  function saveDb() {
+    savePrefs();
+    var draft = currentDraft();
+    if (draft) scheduleDraftSync(draft);
+  }
+  function api(method, path, body) {
+    var options = { method: method, headers: {} };
+    if (db.token) options.headers.Authorization = "Bearer " + db.token;
+    if (body instanceof FormData) options.body = body;
+    else if (body !== undefined) { options.headers["Content-Type"] = "application/json"; options.body = JSON.stringify(body); }
+    return fetch(API + path, options).then(function (res) {
+      if (res.status === 204) return null;
+      return res.json().catch(function () { return {}; }).then(function (data) {
+        if (res.status === 401 && path !== "/auth/login") {
+          db.session = null; db.token = null; db.apps = []; savePrefs(); render();
+        }
+        if (!res.ok) {
+          var error = new Error(typeof data.detail === "string" ? data.detail : "Сервис временно недоступен, попробуйте ещё раз");
+          error.status = res.status;
+          throw error;
+        }
+        return data;
+      });
+    }, function () { throw new Error("Нет связи с сервисом заявок"); });
+  }
+  function upsertApp(app) {
+    var index = db.apps.findIndex(function (item) { return item.id === app.id; });
+    if (index >= 0) db.apps[index] = app; else db.apps.push(app);
+    return app;
+  }
+  function scheduleDraftSync(draft) {
+    clearTimeout(draftTimer);
+    draftTimer = setTimeout(function () { syncDraft(draft.id); }, 400);
+  }
+  function syncDraft(id) {
+    clearTimeout(draftTimer);
+    var draft = db.apps.find(function (app) { return app.id === id && app.status === "draft"; });
+    if (!draft) return Promise.resolve(null);
+    return api("PUT", "/applications/" + id, { form: draft.form, wizardStage: draft.wizardStage, wizardIndex: draft.wizardIndex, company: draft.company })
+      .then(function (saved) { draft.updatedAt = saved.updatedAt; return saved; })
+      .catch(function (error) { showToast("Черновик не сохранён: " + error.message); });
+  }
+  function snapshot() {
+    return JSON.stringify(db.apps.filter(function (app) { return app.status !== "draft"; }).map(function (app) { return [app.id, app.status, app.updatedAt]; }));
+  }
+  function refreshApps(forceRender) {
+    if (!db.token) return Promise.resolve();
+    return api("GET", "/applications").then(function (list) {
+      var localDrafts = {};
+      db.apps.forEach(function (app) { if (app.status === "draft") localDrafts[app.id] = app; });
+      db.apps = list.map(function (app) { return app.status === "draft" && localDrafts[app.id] ? localDrafts[app.id] : app; });
+      loading = false;
+      var snap = snapshot();
+      if (forceRender || (snap !== lastSnapshot && db.view !== "wizard")) render();
+      lastSnapshot = snap;
+    }).catch(function () { loading = false; });
+  }
+  function actionError(error) { showToast(error.message); }
   function uid() { return "req-" + Date.now().toString(36) + "-" + Math.random().toString(36).slice(2, 7); }
   function isoNow() { return new Date().toISOString(); }
   function copy(value) { return JSON.parse(JSON.stringify(value)); }
@@ -135,7 +176,7 @@
   }
   function defaultForm() {
     return {
-      purpose: "", otherGoal: "", moneyUse: "", amount: 3000000, term: 24, collateral: "",
+      purpose: "", otherGoal: "", moneyUse: "", amount: 3000000, term: 24, maxTerm: 24, collateral: "",
       tin: "", applicantName: "", applicantRole: "owner", powerOfAttorney: false,
       monthlyRevenue: 0, revenueOverride: false, currentPayments: 0,
       consentBki: false, consentPrivacy: false
@@ -148,20 +189,16 @@
       db.view = "wizard";
       saveDb();
       render();
-      return existing;
+      return Promise.resolve(existing);
     }
-    var created = {
-      id: uid(), displayId: String(Math.floor(100000 + Math.random() * 900000)), ownerId: db.session.email, ownerName: db.session.name,
-      createdAt: isoNow(), updatedAt: isoNow(), status: "draft", wizardStage: "product", wizardIndex: 0,
-      form: defaultForm(), company: null, applicant: null, product: null, decision: null,
-      history: [{ from: null, to: "draft", at: isoNow(), actor: "Клиент", label: "Черновик создан" }]
-    };
-    db.apps.push(created);
-    db.currentAppId = created.id;
-    db.view = "wizard";
-    saveDb();
-    render();
-    return created;
+    return api("POST", "/applications", { form: defaultForm() }).then(function (created) {
+      upsertApp(created);
+      db.currentAppId = created.id;
+      db.view = "wizard";
+      savePrefs();
+      render();
+      return created;
+    }).catch(actionError);
   }
   function updateDraft(mutator) {
     var draft = currentDraft();
@@ -170,14 +207,6 @@
     draft.updatedAt = isoNow();
     saveDb();
     return draft;
-  }
-  function setStatus(app, status, actor, label) {
-    var oldStatus = app.status;
-    app.status = status;
-    app.updatedAt = isoNow();
-    app.history = app.history || [];
-    app.history.push({ from: oldStatus, to: status, at: isoNow(), actor: actor || "Система", label: label || STATUS_LABEL[status] || status });
-    saveDb();
   }
   var STATUS_LABEL = {
     draft: "Черновик", submitted: "Подана", checking: "Проверяем данные", needs_docs: "Нужны документы",
@@ -224,6 +253,7 @@
   }
   function stopReason(company) {
     if (!company) return "";
+    if (company.stopReason) return company.stopReason;
     if (company.liquidating) return "Компания находится в стадии ликвидации.";
     if (company.bankrupt) return "В отношении компании начата процедура банкротства.";
     if (Number(company.ageMonths) < 3) return "Бизнесу меньше трёх месяцев.";
@@ -231,76 +261,10 @@
     return "";
   }
   function scoreApplication(app) {
-    var company = app.company || {};
-    var form = app.form || {};
-    var quote = selectedQuote(app);
-    var revenue = Math.max(0, Number(form.monthlyRevenue) || Number(company.monthlyRevenue) || 0);
-    var currentPayments = Math.max(0, Number(form.currentPayments) || Number(company.currentPayments) || 0);
-    var loadRatio = revenue > 0 ? (currentPayments + quote.payment) / revenue : 1;
-    var factors = [];
-    var total = 0;
-    var modelUsed = company.hasReport && Number.isFinite(Number(company.modelScore));
-    if (modelUsed) {
-      var model = Number(company.modelScore);
-      var financial = model >= 0.78 ? 40 : 40 * Math.max(0, model) / 0.78;
-      factors.push({ name: "Финансовая устойчивость", value: financial, max: 40, note: "Мок-модель, скор " + model.toFixed(2).replace(".", ",") });
-      total += financial;
-    }
-    var credit = company.creditHistory === "current" ? 0 : company.creditHistory === "closed" ? 10 : 20;
-    factors.push({ name: "Платёжная дисциплина", value: credit, max: 20, note: company.creditHistory === "current" ? "Есть текущие просрочки" : company.creditHistory === "closed" ? "Были закрытые просрочки" : "Просрочек нет" });
-    total += credit;
-    var load = loadRatio < 0.3 ? 15 : loadRatio <= 0.5 ? 8 : 0;
-    factors.push({ name: "Платёжная нагрузка", value: load, max: 15, note: Math.round(loadRatio * 100) + "% выручки" });
-    total += load;
-    var months = Number(company.ageMonths) || 0;
-    var age = months >= 36 ? 10 : months >= 12 ? 7 : months >= 6 ? 4 : months >= 3 ? 1 : 0;
-    factors.push({ name: "Возраст бизнеса", value: age, max: 10, note: months >= 12 ? Math.floor(months / 12) + " лет" : months + " мес." });
-    total += age;
-    var tax = Number(company.taxDebt) > 100000 ? 0 : Number(company.taxDebt) > 0 ? 5 : 10;
-    factors.push({ name: "Налоговый долг", value: tax, max: 10, note: Number(company.taxDebt) > 0 ? money(company.taxDebt) : "Нет" });
-    total += tax;
-    var legal = company.courtCases || Number(company.bailiffDebt) > 0 ? 0 : 5;
-    factors.push({ name: "Суды и приставы", value: legal, max: 5, note: legal ? "Ограничений нет" : "Есть синтетические записи" });
-    total += legal;
-    if (!modelUsed) total = total * 100 / 60;
-    return { total: Math.max(0, Math.min(100, total)), factors: factors, modelUsed: modelUsed, ratio: loadRatio, payment: quote.payment, revenue: revenue, currentPayments: currentPayments };
+    // Балл и разбивку по факторам считает сервис скоринга; здесь только отображение.
+    return (app && app.decision && app.decision.score) || { total: 0, factors: [], modelUsed: false };
   }
-  function calculateDecision(app) {
-    var score = scoreApplication(app);
-    var quote = selectedQuote(app);
-    if (score.total < 35) return { kind: "declined", score: score, reason: "Итоговый балл пока ниже порога для предложения. Можно подать заявку снова, когда финансовая нагрузка станет меньше." };
-    if (score.total < 50) return { kind: "manual_review", score: score, reason: "Нужна дополнительная проверка специалистом банка." };
-    var allowedRatio = score.total >= 70 ? 0.3 : 0.2;
-    var limit = score.revenue * allowedRatio;
-    if (score.payment <= limit) {
-      return { kind: "approved", score: score, amount: quote.amount, months: quote.months, rate: quote.product.rate, payment: quote.payment, reason: "Платёж укладывается в комфортную долю от выручки." };
-    }
-    var months = Math.min(Number(app.form.term) || quote.months, quote.product.maxTerm);
-    var amount = Math.min(quote.amount, quote.product.maxAmount);
-    var proposal = null;
-    for (var candidate = amount; candidate >= quote.product.minAmount; candidate -= 100000) {
-      var payment = monthPayment(candidate, quote.product.rate, months);
-      if (payment <= limit) {
-        proposal = { amount: candidate, months: months, rate: quote.product.rate, payment: payment };
-        break;
-      }
-    }
-    if (proposal && proposal.amount < quote.amount) {
-      return { kind: "counteroffer", score: score, amount: proposal.amount, months: proposal.months, rate: proposal.rate, payment: proposal.payment, reason: "При меньшей сумме платёж будет комфортнее для выручки компании." };
-    }
-    return { kind: "declined", score: score, reason: "При текущей выручке платёж получился бы слишком высоким. Можно подать заявку повторно после роста поступлений." };
-  }
-  function due(app, delay) { app.nextAt = Date.now() + delay; }
   function consentLabel(kind) { return kind === "bki" ? "Запрос кредитной истории, 218-ФЗ" : "Обработка персональных данных, 152-ФЗ"; }
-  function newCompany(tin) {
-    return {
-      tin: tin, name: "ООО «Компания для демо»", legalType: tin.length === 12 ? "ИП" : "ООО",
-      regDate: "01.08.2020", ageMonths: 74, region: "Москва", activity: "Оптовая торговля",
-      director: "Алексей Смирнов", hasReport: false, annualRevenue: null, monthlyRevenue: 650000,
-      modelScore: null, creditHistory: "clear", currentPayments: 0, taxDebt: 0, courtCases: false, bailiffDebt: 0,
-      liquidating: false, requiresDocs: true, syntheticFallback: true
-    };
-  }
   function validInn(value) {
     var tin = String(value || "").replace(/\D/g, "");
     if (DEMO_COMPANIES[tin]) return true;
@@ -318,9 +282,6 @@
       return (s11 % 11 % 10) === d[10] && (s12 % 11 % 10) === d[11];
     }
     return false;
-  }
-  function companyForInn(tin) {
-    return copy(DEMO_COMPANIES[tin] || newCompany(tin));
   }
   function icon(name) {
     var paths = {
@@ -432,7 +393,7 @@
       return '<section class="dashboard-callout"><div class="callout-copy"><p class="eyebrow">Заявка проверяется</p><h2>Её смотрит специалист банка</h2><p>Решение по заявке № ' + esc(displayId(manual)) + " появится здесь. Можно вернуться позже.</p><button class=\"btn btn-secondary btn-small\" type=\"button\" data-action=\"open-app\" data-id=\"" + esc(manual.id) + '">Открыть трекер</button></div><div class="callout-art"><div class="art-circle"></div><div class="art-card"><b>Альфа-Банк</b><span>ПРОВЕРКА</span></div></div></section>';
     }
     if (draft) {
-      return '<section class="dashboard-callout"><div class="callout-copy"><p class="eyebrow">Черновик сохранён</p><h2>Продолжите оформление заявки</h2><p>' + esc(draft.company ? draft.company.name : "Ответы сохранены на этом устройстве") + ' · шаг «' + esc(stageTitle(draft.wizardStage)) + '».</p><button class="btn btn-primary btn-small" type="button" data-action="resume-draft">Продолжить <span class="icon-arrow">→</span></button></div><div class="callout-art"><div class="art-circle"></div><div class="art-card"><b>Альфа-Банк</b><span>ЧЕРНОВИК</span></div></div></section>';
+      return '<section class="dashboard-callout"><div class="callout-copy"><p class="eyebrow">Черновик сохранён</p><h2>Продолжите оформление заявки</h2><p>' + esc(draft.company ? draft.company.name : "Ответы сохранены") + ' · шаг «' + esc(stageTitle(draft.wizardStage)) + '».</p><button class="btn btn-primary btn-small" type="button" data-action="resume-draft">Продолжить <span class="icon-arrow">→</span></button></div><div class="callout-art"><div class="art-circle"></div><div class="art-card"><b>Альфа-Банк</b><span>ЧЕРНОВИК</span></div></div></section>';
     }
     return '<section class="dashboard-callout"><div class="callout-copy"><p class="eyebrow">Финансирование для бизнеса</p><h2>Подберите кредит для своей задачи</h2><p>Ответьте на несколько вопросов — мы покажем подходящий вариант и поможем пройти путь до решения.</p><button class="btn btn-primary btn-small" type="button" data-action="start-new">Подобрать кредит <span class="icon-arrow">→</span></button></div><div class="callout-art" aria-hidden="true"><div class="art-circle"></div><div class="art-card"><b>Альфа-Банк</b><span>ДЛЯ БИЗНЕСА</span></div><div class="art-coin">А</div></div></section>';
   }
@@ -449,7 +410,7 @@
     return '<div class="page-heading"><div><p class="eyebrow">Добрый день, ' + esc((db.session.name || "Клиент").split(" ")[0]) + '</p><h1>Кредитный кабинет</h1><p class="page-subtitle">' + esc(apps[0] && apps[0].company ? apps[0].company.name : "Управляйте заявками и следите за решением онлайн") + '</p></div>' +
       '<div class="heading-actions"><button class="btn btn-primary" type="button" data-action="' + (draftForSession() ? "resume-draft" : "start-new") + '">' + (draftForSession() ? "Продолжить" : "Новая заявка") + "</button></div></div>" +
       dashboardCallout() + dashboardStats(apps) +
-      '<section class="panel panel-pad"><div class="section-head"><div><h2>Мои заявки</h2><p>Заявки и черновики, сохранённые в этом браузере</p></div><button class="text-button" type="button" data-action="nav" data-view="applications">Все заявки →</button></div>' +
+      '<section class="panel panel-pad"><div class="section-head"><div><h2>Мои заявки</h2><p>Заявки и черновики вашей компании</p></div><button class="text-button" type="button" data-action="nav" data-view="applications">Все заявки →</button></div>' +
       appTable(apps.slice(0, 5), false) + '</section><p class="disclaimer">Демонстрационная версия. Ставки, данные и решения синтетические и не являются предложением банка.</p>';
   }
   function renderApplications() {
@@ -457,7 +418,7 @@
     return '<div class="page-heading"><div><p class="eyebrow">' + (db.session.role === "staff" ? "Рабочее место" : "Кредитный кабинет") + '</p><h1>' + (db.session.role === "staff" ? "Все заявки" : "Мои заявки") + '</h1><p class="page-subtitle">Текущий статус и сумма каждой заявки</p></div>' +
       (db.session.role === "client" ? '<div class="heading-actions"><button class="btn btn-primary" type="button" data-action="' + (draftForSession() ? "resume-draft" : "start-new") + '">' + (draftForSession() ? "Продолжить черновик" : "Подобрать кредит") + "</button></div>" : "") + "</div>" +
       '<section class="panel panel-pad"><div class="section-head"><div><h2>Список заявок</h2><p>' + apps.length + (apps.length === 1 ? " запись" : " записей") + "</p></div></div>" + appTable(apps, true) + '</section>' +
-      '<p class="disclaimer">История статусов и согласий сохраняется только в локальном браузере.</p>';
+      '<p class="disclaimer">История статусов и журнал согласий хранятся в сервисе заявок.</p>';
   }
   function renderDocuments() {
     var apps = visibleApps().filter(function (app) { return app.status === "needs_docs" || app.documentName; });
@@ -467,9 +428,9 @@
           (app.documentName ? esc(app.documentName) : "Выписка по счёту") + "</td><td>" + statusBadge(app.documentName ? app.status : "needs_docs") +
           '</td><td><button class="text-button" type="button" data-action="open-app" data-id="' + esc(app.id) + '">' + (app.documentName ? "Открыть заявку" : "Загрузить →") + "</button></td></tr>";
       }).join("") + "</tbody></table></div>" :
-      '<div class="empty-state"><div class="empty-icon">' + icon("file") + '</div><h3>Документы не запрашивались</h3><p>Если для заявки понадобится выписка, запрос появится здесь. В демо файл не отправляется на сервер.</p><button class="btn btn-secondary btn-small" type="button" data-action="nav" data-view="applications">К заявкам</button></div>';
+      '<div class="empty-state"><div class="empty-icon">' + icon("file") + '</div><h3>Документы не запрашивались</h3><p>Если для заявки понадобится выписка, запрос появится здесь. Файл сохранится в заявке.</p><button class="btn btn-secondary btn-small" type="button" data-action="nav" data-view="applications">К заявкам</button></div>';
     return '<div class="page-heading"><div><p class="eyebrow">Кредитный кабинет</p><h1>Документы</h1><p class="page-subtitle">Запрошенные выписки по заявкам</p></div></div>' +
-      '<section class="panel panel-pad"><div class="section-head"><div><h2>Документы по заявкам</h2><p>Файлы остаются в вашем браузере</p></div></div>' + rows + '</section><p class="disclaimer">Сохраняем только имя выбранного PDF-файла. Содержимое не загружается и не пересылается.</p>';
+      '<section class="panel panel-pad"><div class="section-head"><div><h2>Документы по заявкам</h2><p>Файлы хранятся в сервисе заявок</p></div></div>' + rows + '</section><p class="disclaimer">PDF-выписки хранятся в сервисе заявок вместе с контрольной суммой файла.</p>';
   }
   function renderShell(content, active) {
     var staff = db.session.role === "staff";
@@ -487,13 +448,17 @@
       '<div class="app-shell ' + (active === "dashboard" ? "dashboard-shell" : "") + '"><aside class="sidebar"><div class="side-caption">' + (staff ? "Сотрудник банка" : "Кредитный кабинет") + '</div><nav class="side-nav">' + side + "</nav>" +
       '<div class="side-spacer"></div><div class="side-help"><strong>Нужна помощь?</strong><p>Подскажем, как пройти заявку. В демо отвечаем прямо здесь.</p><button class="text-button" type="button" data-action="help">Как это работает →</button></div>' +
       '<div class="side-footer"><b>' + (staff ? "Демо-сотрудник" : "Демо-профиль компании") + "</b>" + (staff ? "Локальное рабочее место" : "Синтетические данные") + "</div></aside>" +
-      '<main class="main ' + (active === "dashboard" ? "dashboard-main" : "") + '">' + content + '<p class="footer-note">Демо-версия · ставки и данные синтетические · никаких внешних запросов</p></main></div>' +
+      '<main class="main ' + (active === "dashboard" ? "dashboard-main" : "") + '">' + content + '<p class="footer-note">Демо-версия · ставки и данные синтетические · внешние источники — локальные моки</p></main></div>' +
       '<nav class="mobile-nav ' + (staff ? "staff" : "") + (active === "dashboard" ? " dashboard-nav" : "") + '" aria-label="Основная навигация">' + mobileViews + "</nav>";
   }
   function render() {
     if (!appRoot) return;
     if (!db.session) {
       appRoot.innerHTML = renderLogin();
+      return;
+    }
+    if (loading) {
+      appRoot.innerHTML = '<div class="empty-state" style="min-height:60vh"><h3>Загружаем заявки…</h3></div>';
       return;
     }
     var view = db.view || (db.session.role === "staff" ? "employee" : "dashboard");
@@ -611,9 +576,10 @@
       var months = Math.max(product.minTerm, Math.min(product.maxTerm, Number(form.term) || 24));
       if (Number(form.term) !== months) { form.term = months; d.updatedAt = isoNow(); saveDb(); }
       var maxTerm = product.maxTerm;
-      return questionIntro("Вопрос 4 из 5", "На какой срок?", "Укажите максимальный срок, который вам подходит. Если платёж окажется высоким, рассмотрим этот предел.") +
+      return questionIntro("Вопрос 4 из 5", "На какой срок?", "Укажите желаемый срок. Ниже можно отметить, на какой максимальный срок вы готовы, если платёж окажется высоким.") +
         '<div class="field-inline"><div class="field"><label for="term-number">Срок кредита</label><div class="input-wrap"><input class="input" id="term-number" type="number" min="' + product.minTerm + '" max="' + maxTerm + '" step="1" data-field="term" value="' + months + '" /><span class="input-suffix">мес.</span></div></div><div class="field"><span class="field-label">До ' + maxTerm + " месяцев</span><span class=\"field-hint\">" + esc(product.title) + "</span></div></div>" +
         '<input class="range" type="range" min="' + product.minTerm + '" max="' + maxTerm + '" step="1" value="' + months + '" data-field="term" aria-label="Срок кредита" /><div class="range-scale"><span>' + product.minTerm + " мес.</span><span>" + maxTerm + " мес.</span></div>" +
+        '<div class="field" style="margin-top:14px"><label for="max-term">Если платёж окажется высоким, готовы увеличить срок до</label><div class="input-wrap"><input class="input" id="max-term" type="number" min="' + months + '" max="' + maxTerm + '" step="1" data-field="maxTerm" value="' + Math.max(months, Math.min(maxTerm, Number(form.maxTerm) || months)) + '" /><span class="input-suffix">мес.</span></div><span class="field-hint">Тогда банк сначала предложит ту же сумму на более длинный срок, а не меньшую сумму.</span></div>' +
         '<div class="quick-values">' + [12, 18, 24, 36, 60].filter(function (value) { return value >= product.minTerm && value <= maxTerm; }).map(function (value) {
           return '<button class="quick-chip ' + (months === value ? "active" : "") + '" type="button" data-action="quick-value" data-field="term" data-value="' + value + '">' + value + " мес.</button>";
         }).join("") + '</div><div class="form-actions"><button class="btn btn-secondary" type="button" data-action="wizard-back">Назад</button><button class="btn btn-primary" type="button" data-action="wizard-next">Продолжить</button></div>';
@@ -652,7 +618,7 @@
     var out = questionIntro("Шаг 2 из 4", "Проверим компанию", "Введите ИНН — данные появятся из синтетического реестра для демонстрации.");
     if (!company || (company.syntheticFallback && company.tin !== d.form.tin)) {
       out += '<form id="company-search"><div class="field"><label for="company-inn">ИНН компании</label><div class="field-inline" style="grid-template-columns:minmax(0,1fr) auto"><input class="input" id="company-inn" name="inn" data-field="tin" inputmode="numeric" autocomplete="off" maxlength="12" placeholder="10 или 12 цифр" value="' + esc(d.form.tin) + '" required /><button class="btn btn-dark" type="submit">' + icon("search") + " Найти</button></div>" +
-        '<span class="field-hint">Используются только локальные демо-данные. Реальных запросов в ЕГРЮЛ/ЕГРИП нет.</span></div></form>';
+        '<span class="field-hint">Сведения приходят из моков ЕГРЮЛ/ЕГРИП, ФНС и ФССП. Все компании синтетические.</span></div></form>';
       out += '<div class="field"><span class="field-label">Демо-компании</span><div class="demo-inn-list">' +
         Object.keys(DEMO_COMPANIES).map(function (tin) { return '<button class="demo-inn" type="button" data-action="demo-inn" data-value="' + tin + '">' + esc(tin) + " · " + esc(DEMO_COMPANIES[tin].name.replace(/[«»"]/g, "")) + "</button>"; }).join("") + "</div></div>";
       if (wizardError) out += '<div class="inline-info danger" role="alert">' + esc(wizardError) + "</div>";
@@ -681,7 +647,7 @@
     var company = d.company;
     var form = d.form;
     var revenue = Number(form.monthlyRevenue) || Number(company.monthlyRevenue) || 0;
-    var out = questionIntro("Шаг 3 из 4", "Кто подаёт заявку?", "Эти сведения нужны для примера проверки и останутся в вашем браузере.");
+    var out = questionIntro("Шаг 3 из 4", "Кто подаёт заявку?", "Эти сведения сохраняются в заявке и нужны для проверки.");
     out += '<div class="field"><label for="applicant-name">ФИО заявителя</label><input class="input" id="applicant-name" type="text" data-field="applicantName" value="' + esc(form.applicantName || company.director) + '" placeholder="Имя Фамилия" /></div>';
     out += '<div class="field"><span class="field-label">Кем вы приходитесь компании?</span><div class="option-grid" style="margin-top:7px">' +
       optionCard("Собственник или директор", "owner", "applicantRole", "С", "", form.applicantRole === "owner") +
@@ -707,10 +673,10 @@
     var quote = selectedQuote(d);
     var company = d.company;
     var applicant = d.form.applicantName || company.director;
-    var out = questionIntro("Шаг 4 из 4", "Согласия и итог заявки", "Перед отправкой проверьте данные. В демо согласия сохраняются только в журнале на этом устройстве.");
+    var out = questionIntro("Шаг 4 из 4", "Согласия и итог заявки", "Перед отправкой проверьте данные. Согласия сохраняются в журнале заявки с датой и автором.");
     out += '<form id="consent-form"><div class="checkbox-row"><input type="checkbox" id="consent-bki" data-field="consentBki" ' + (d.form.consentBki ? "checked" : "") + ' required /><label for="consent-bki"><strong>Согласие на запрос в бюро кредитных историй</strong><br />Разрешаю запрос сведений для оценки заявки (218-ФЗ). <button class="text-button" type="button" data-action="legal-info" data-kind="bki">Текст согласия</button></label></div>' +
       '<div class="checkbox-row"><input type="checkbox" id="consent-privacy" data-field="consentPrivacy" ' + (d.form.consentPrivacy ? "checked" : "") + ' required /><label for="consent-privacy"><strong>Согласие на обработку персональных данных</strong><br />Разрешаю использовать сведения этой демо-заявки (152-ФЗ). <button class="text-button" type="button" data-action="legal-info" data-kind="privacy">Текст согласия</button></label></div>' +
-      '<div class="inline-info">Никакие сведения не передаются в БКИ, ФНС или другие внешние сервисы. Это учебная симуляция согласий.</div>' +
+      '<div class="inline-info">Запрос в БКИ уходит только после согласия. В демо вместо бюро и ФНС работают локальные моки.</div>' +
       '<div class="summary-list"><div class="summary-line"><span>Продукт</span><b>' + esc(quote.product.title) + '</b></div><div class="summary-line"><span>Сумма</span><b>' + esc(money(quote.amount)) + '</b></div><div class="summary-line"><span>Срок</span><b>' + esc(termText(quote.months)) + '</b></div>' +
       '<div class="summary-line"><span>Компания</span><b>' + esc(company.name) + '</b></div><div class="summary-line"><span>Заявитель</span><b>' + esc(applicant) + '</b></div><div class="summary-line"><span>Выручка в месяц</span><b>' + esc(money(d.form.monthlyRevenue)) + '</b></div></div>' +
       '<div class="form-actions"><button class="btn btn-secondary" type="button" data-action="wizard-back">Назад</button><button class="btn btn-primary" type="submit">Отправить заявку <span class="icon-arrow">→</span></button></div></form>';
@@ -761,17 +727,17 @@
       return '<section class="panel action-card"><p class="question-kicker">Что нужно от вас</p><h3>Загрузите выписку по счёту</h3><p>В демо нет отчётности по выручке. Приложите любой PDF, чтобы перейти к оценке заявки.</p>' +
         (app.documentName ? '<div class="inline-info success">Файл выбран: ' + esc(app.documentName) + "</div>" : "") +
         '<form id="upload-form"><label class="field-label" for="document-file">Выписка в формате PDF</label><input class="file-input" id="document-file" name="file" type="file" accept=".pdf,application/pdf" required />' +
-        '<button class="btn btn-primary btn-full" type="submit">Загрузить документ</button></form><p class="disclaimer">Файл не отправляется и не загружается на сервер. Сохраняется только его имя.</p></section>';
+        '<button class="btn btn-primary btn-full" type="submit">Загрузить документ</button></form><p class="disclaimer">PDF до 10 МБ сохраняется в сервисе заявок. Подойдёт любой PDF — данные синтетические.</p></section>';
     }
     if (app.status === "manual_review") {
-      return '<section class="panel action-card"><p class="question-kicker">Решение на проверке</p><h3>Заявку смотрит специалист банка</h3><p>В демо решение принимает сотрудник в локальном рабочем месте. Вернитесь сюда после проверки.</p>' +
+      return '<section class="panel action-card"><p class="question-kicker">Решение на проверке</p><h3>Заявку смотрит специалист банка</h3><p>Решение принимает сотрудник банка в рабочем месте. Оно появится здесь автоматически.</p>' +
         (db.session.role === "staff" ? '<button class="btn btn-dark btn-full" type="button" data-action="nav" data-view="employee">Открыть рабочее место</button>' : "") +
         '<p class="disclaimer">Баллы скоринга: ' + Number(scoreApplication(app).total).toFixed(1).replace(".", ",") + " из 100.</p></section>";
     }
     if (app.status === "approved" || app.status === "counteroffer") {
       var isCounter = app.status === "counteroffer";
       return '<section class="panel action-card"><p class="question-kicker">Решение готово</p><h3>' + (isCounter ? "Предлагаем другой размер кредита" : "Кредит одобрен") + '</h3><div class="decision-banner ' + (isCounter ? "counteroffer" : "approved") + '"><p>' +
-        (isCounter ? "Вы просили " + esc(money(app.form.amount)) + " на " + esc(termText(app.form.term)) + ". Можем предложить:" : "Предварительные условия по заявке:") +
+        (isCounter ? "Вы просили " + esc(money(app.form.amount)) + " на " + esc(termText(app.form.term)) + " Можем предложить:" : "Предварительные условия по заявке:") +
         '</p><div class="summary-line"><span>Сумма</span><b>' + esc(money(decision.amount)) + '</b></div><div class="summary-line"><span>Срок</span><b>' + esc(termText(decision.months)) + '</b></div>' +
         '<div class="summary-line"><span>Ставка</span><b>' + decision.rate + "% годовых</b></div><div class=\"summary-line\"><span>Платёж в месяц</span><b>" + esc(money(decision.payment)) + "</b></div></div>" +
         '<p style="margin-top:12px">' + esc(decision.reason || "Решение сформировано в демонстрационном сценарии.") + "</p>" +
@@ -800,7 +766,7 @@
     var statusText = app.status === "needs_docs" ? "Нужна выписка" : STATUS_LABEL[app.status] || "Заявка";
     var quote = selectedQuote(app);
     return '<div class="page-heading"><div><p class="eyebrow">Заявка № ' + esc(displayId(app)) + " · " + esc(appCompanyName(app)) + '</p><h1>Статус заявки</h1><p class="page-subtitle">' + esc(appProductName(app)) + " · " + esc(money(appAmount(app))) + '</p></div><div class="heading-actions">' + statusBadge(app.status) + "</div></div>" +
-      '<div class="status-layout"><section class="panel status-card"><div class="status-overview"><div><span class="app-id">Подана ' + esc(dateTime(app.submittedAt || app.createdAt)) + '</span><h2>' + esc(statusText) + '</h2><p>Статус обновляется автоматически в этом браузере.</p></div><button class="btn btn-outline btn-small" type="button" data-action="nav" data-view="applications">Все заявки</button></div>' +
+      '<div class="status-layout"><section class="panel status-card"><div class="status-overview"><div><span class="app-id">Подана ' + esc(dateTime(app.submittedAt || app.createdAt)) + '</span><h2>' + esc(statusText) + '</h2><p>Статус обновляется автоматически.</p></div><button class="btn btn-outline btn-small" type="button" data-action="nav" data-view="applications">Все заявки</button></div>' +
       timeline(app) + (app.status === "manual_review" ? '<div class="inline-info">Специалист банка изучает заявку. Демо-сотрудник может выбрать решение в рабочем месте.</div>' : "") +
       '<details style="margin-top:12px"><summary class="text-button">История статусов</summary><div class="summary-list">' + (app.history || []).slice().reverse().map(function (event) {
         return '<div class="summary-line"><span>' + esc(dateTime(event.at)) + " · " + esc(event.actor) + '</span><b>' + esc(event.label || STATUS_LABEL[event.to] || event.to) + "</b></div>";
@@ -824,7 +790,7 @@
       '<div class="contract-grid"><div class="contract-term"><small>Заёмщик</small><b>' + esc(appCompanyName(app)) + '</b></div><div class="contract-term"><small>Продукт</small><b>' + esc(appProductName(app)) + '</b></div>' +
       '<div class="contract-term"><small>Сумма</small><b>' + esc(money(decision.amount)) + '</b></div><div class="contract-term"><small>Срок</small><b>' + esc(termText(decision.months)) + '</b></div>' +
       '<div class="contract-term"><small>Демо-ставка</small><b>' + decision.rate + "% годовых</b></div><div class=\"contract-term\"><small>Примерный платёж</small><b>" + esc(money(decision.payment)) + "</b></div></div>" +
-      '<p>Согласованное предложение сохраняется в локальной истории заявки. Зачисление после нажатия «Подписать» будет смоделировано в кабинете.</p></div>' +
+      '<p>Согласованное предложение сохраняется в истории заявки. Зачисление после нажатия «Подписать» будет смоделировано в кабинете.</p></div>' +
       '<div class="checkbox-row" style="max-width:720px;margin:0 auto 14px"><input type="checkbox" id="contract-check" /><label for="contract-check"><strong>Я ознакомлен с условиями демо-договора</strong><br />Понимаю, что этот шаг имитирует подписание и не отправляет документ.</label></div>' +
       '<div class="heading-actions" style="justify-content:center"><button class="btn btn-secondary" type="button" data-action="nav" data-view="tracker">Назад к заявке</button><button class="btn btn-primary" type="button" data-action="sign-contract">Подписать</button></div></section>';
   }
@@ -859,9 +825,10 @@
   function persistField(field, value) {
     var draft = currentDraft();
     if (!draft || !draft.form) return;
-    if (field === "amount" || field === "term" || field === "monthlyRevenue" || field === "currentPayments") {
+    if (field === "amount" || field === "term" || field === "maxTerm" || field === "monthlyRevenue" || field === "currentPayments") {
       var number = Number(value);
       if (Number.isFinite(number)) draft.form[field] = number;
+      if (field === "term" && Number.isFinite(number)) draft.form.maxTerm = number;
     } else if (field === "powerOfAttorney" || field === "consentBki" || field === "consentPrivacy" || field === "revenueOverride") {
       draft.form[field] = Boolean(value);
     } else {
@@ -896,14 +863,16 @@
       render();
       return;
     }
-    draft.company = companyForInn(tin);
-    draft.form.monthlyRevenue = Number(draft.company.monthlyRevenue) || 0;
-    draft.form.currentPayments = Number(draft.company.currentPayments) || 0;
-    draft.form.applicantName = draft.company.director || "";
-    draft.wizardStage = "company";
-    draft.updatedAt = isoNow();
-    saveDb();
-    render();
+    api("GET", "/companies/" + tin).then(function (company) {
+      draft.company = company;
+      draft.form.monthlyRevenue = Number(company.monthlyRevenue) || 0;
+      draft.form.currentPayments = 0;
+      draft.form.applicantName = company.director || "";
+      draft.wizardStage = "company";
+      draft.updatedAt = isoNow();
+      saveDb();
+      render();
+    }).catch(function (error) { wizardError = error.message; render(); });
   }
   function submitApplication(draft) {
     var form = draft.form;
@@ -913,91 +882,19 @@
       return;
     }
     if (!form.consentBki || !form.consentPrivacy) {
-      showToast("Отметьте оба согласия, чтобы отправить демо-заявку.");
+      showToast("Отметьте оба согласия, чтобы отправить заявку.");
       return;
     }
-    var stamp = isoNow();
-    var quote = selectedQuote(draft);
-    draft.applicant = {
-      name: form.applicantName || draft.company.director,
-      relation: form.applicantRole,
-      powerOfAttorney: Boolean(form.powerOfAttorney),
-      monthlyRevenue: Number(form.monthlyRevenue) || 0,
-      currentPayments: Number(form.currentPayments) || 0
-    };
-    draft.product = { key: productKey(form), title: quote.product.title, rate: quote.product.rate };
-    draft.consentLog = [
-      { type: "bki", text: consentLabel("bki"), agreed: true, user: db.session.email, at: stamp },
-      { type: "privacy", text: consentLabel("privacy"), agreed: true, user: db.session.email, at: stamp }
-    ];
-    draft.submittedAt = stamp;
-    draft.decision = null;
-    draft.documentName = "";
-    due(draft, 2600);
-    setStatus(draft, "submitted", "Клиент", "Заявка отправлена");
-    db.currentAppId = draft.id;
-    db.view = "tracker";
-    saveDb();
-    render();
-    showToast("Заявка отправлена. Покажем, как меняется статус.");
-  }
-  function timelineTransition(app) {
-    var blocked = stopReason(app.company);
-    if (app.status === "submitted") {
-      setStatus(app, "checking", "Система", "Проверка данных");
-      due(app, 2700);
-      return true;
-    }
-    if (app.status === "checking") {
-      if (blocked) {
-        app.decision = { kind: "declined", score: scoreApplication(app), reason: blocked + " Это стоп-фактор для демонстрационной заявки." };
-        app.decision.productTitle = appProductName(app);
-        setStatus(app, "declined", "Система", "Отказ по стоп-фактору");
-      } else if (app.company && app.company.requiresDocs && !app.documentName) {
-        setStatus(app, "needs_docs", "Система", "Запрошена выписка по счёту");
-        app.nextAt = null;
-      } else {
-        setStatus(app, "enrichment", "Система", "Получение сведений о компании");
-        due(app, 2700);
-      }
-      return true;
-    }
-    if (app.status === "enrichment") {
-      setStatus(app, "scoring", "Система", "Оценка заявки");
-      due(app, 2700);
-      return true;
-    }
-    if (app.status === "scoring") {
-      var decision = calculateDecision(app);
-      decision.productTitle = appProductName(app);
-      app.decision = decision;
-      if (decision.kind === "manual_review") {
-        setStatus(app, "manual_review", "Система", "Направлена на ручную проверку");
-      } else {
-        setStatus(app, decision.kind, "Система", decision.kind === "counteroffer" ? "Подготовлено контрпредложение" : decision.kind === "approved" ? "Заявка одобрена" : "Отказано по баллам скоринга");
-      }
-      return true;
-    }
-    if (app.status === "signed" && app.issueAt && Date.now() >= app.issueAt) {
-      app.issuedAt = isoNow();
-      setStatus(app, "issued", "Система", "Демо-зачисление на счёт");
-      return true;
-    }
-    return false;
-  }
-  function tick() {
-    var changed = false;
-    var now = Date.now();
-    db.apps.forEach(function (app) {
-      if (app.nextAt && now >= app.nextAt) {
-        app.nextAt = null;
-        if (timelineTransition(app)) changed = true;
-      }
-    });
-    if (changed) {
-      saveDb();
-      if (db.session) render();
-    }
+    syncDraft(draft.id).then(function () {
+      return api("POST", "/applications/" + draft.id + "/submit");
+    }).then(function (app) {
+      upsertApp(app);
+      db.currentAppId = app.id;
+      db.view = "tracker";
+      savePrefs();
+      render();
+      showToast("Заявка отправлена. Статус обновляется автоматически.");
+    }).catch(actionError);
   }
   function renderHistory(app) {
     return '<details><summary class="text-button">Показать журнал согласий и статусов</summary><div class="summary-list">' +
@@ -1011,32 +908,33 @@
     var values = new FormData(form);
     var email = String(values.get("email") || "").trim().toLowerCase();
     var password = String(values.get("password") || "");
-    var role = email === DEMO_ACCOUNTS.staff.email ? "staff" : email === DEMO_ACCOUNTS.client.email ? "client" : "";
-    if (!role || role !== loginRole || password !== DEMO_PASSWORD) {
+    api("POST", "/auth/login", { email: email, password: password, role: loginRole }).then(function (result) {
+      db.token = result.token;
+      db.session = result.user;
+      db.view = result.user.role === "staff" ? "employee" : "dashboard";
+      loginError = "";
+      loading = true;
+      savePrefs();
+      render();
+      return refreshApps(true);
+    }).catch(function () {
       loginError = "Не удалось войти. Используйте логин и пароль из подсказки.";
       render();
-      return;
-    }
-    var account = DEMO_ACCOUNTS[role];
-    db.session = { email: account.email, name: account.name, role: account.role };
-    db.view = role === "staff" ? "employee" : "dashboard";
-    loginError = "";
-    saveDb();
-    render();
+    });
   }
   function signContract(app) {
     var checkbox = document.getElementById("contract-check");
     if (!checkbox || !checkbox.checked) {
-      showToast("Подтвердите, что ознакомились с демо-условиями.");
+      showToast("Подтвердите, что ознакомились с условиями.");
       return;
     }
-    app.signedAt = isoNow();
-    app.issueAt = Date.now() + 2100;
-    setStatus(app, "signed", "Клиент", "Демо-договор подписан");
-    db.view = "contract";
-    saveDb();
-    render();
-    showToast("Договор подписан в демо.");
+    api("POST", "/applications/" + app.id + "/sign").then(function (saved) {
+      upsertApp(saved);
+      db.view = "contract";
+      savePrefs();
+      render();
+      showToast("Договор подписан.");
+    }).catch(actionError);
   }
   function employeeDecision(kind) {
     var app = db.apps.find(function (item) { return item.id === db.staffAppId && item.status === "manual_review"; });
@@ -1048,51 +946,24 @@
       showToast("Укажите сумму от 300 тыс. ₽ и срок.");
       return;
     }
-    if (kind === "declined" && !reason) reason = "После ручной проверки заявку пока нельзя одобрить.";
-    var product = getProduct(app);
-    if (kind !== "declined") {
-      app.decision = {
-        kind: kind, score: scoreApplication(app), amount: amount,
-        months: months, rate: product.rate, payment: monthPayment(amount, product.rate, months),
-        reason: kind === "counteroffer" ? "Специалист предложил изменить сумму или срок, чтобы платёж соответствовал выручке." : "Решение принято специалистом банка.",
-        productTitle: product.title, actor: db.session.name
-      };
-      setStatus(app, kind, db.session.name, kind === "counteroffer" ? "Контрпредложение сотрудника" : "Одобрено сотрудником");
-    } else {
-      app.decision = { kind: kind, score: scoreApplication(app), reason: reason, productTitle: product.title, actor: db.session.name };
-      setStatus(app, "declined", db.session.name, "Отказ после ручной проверки");
-    }
-    db.staffAppId = null;
-    saveDb();
-    render();
-    showToast(kind === "declined" ? "Решение по заявке сохранено." : "Предложение появилось в кабинете клиента.");
+    api("POST", "/applications/" + app.id + "/staff-decision", { kind: kind, amount: kind === "declined" ? null : amount, months: kind === "declined" ? null : months, reason: reason || null })
+      .then(function (saved) {
+        upsertApp(saved);
+        db.staffAppId = null;
+        savePrefs();
+        render();
+        showToast(kind === "declined" ? "Решение по заявке сохранено." : "Предложение появилось в кабинете клиента.");
+      }).catch(actionError);
   }
   function editOffer(app) {
     if (!app || !app.decision) return;
-    setStatus(app, "rejected_by_client", "Клиент", "Клиент выбрал изменить параметры");
-    var clone = copy(app);
-    clone.id = uid();
-    clone.displayId = String(Math.floor(100000 + Math.random() * 900000));
-    clone.createdAt = isoNow();
-    clone.updatedAt = isoNow();
-    clone.status = "draft";
-    clone.submittedAt = null;
-    clone.decision = null;
-    clone.consentLog = [];
-    clone.documentName = "";
-    clone.nextAt = null;
-    clone.wizardStage = "product";
-    clone.wizardIndex = 2;
-    clone.form.amount = Number(app.decision.amount) || clone.form.amount;
-    clone.form.term = Number(app.decision.months) || clone.form.term;
-    clone.form.consentBki = false;
-    clone.form.consentPrivacy = false;
-    clone.history = [{ from: null, to: "draft", at: isoNow(), actor: "Клиент", label: "Создан черновик с изменёнными параметрами" }];
-    db.apps.push(clone);
-    db.currentAppId = clone.id;
-    db.view = "wizard";
-    saveDb();
-    render();
+    api("POST", "/applications/" + app.id + "/revise").then(function (draft) {
+      upsertApp(draft);
+      db.currentAppId = draft.id;
+      db.view = "wizard";
+      savePrefs();
+      return refreshApps(true);
+    }).catch(actionError);
   }
   function onClick(event) {
     var target = event.target && event.target.closest ? event.target.closest("[data-action]") : null;
@@ -1110,15 +981,16 @@
       loginError = "";
       render();
     } else if (action === "logout") {
-      db.session = null; db.view = "dashboard"; saveDb(); render();
+      if (db.token) api("POST", "/auth/logout").catch(function () {});
+      db.session = null; db.token = null; db.apps = []; db.view = "dashboard"; savePrefs(); render();
     } else if (action === "nav") {
       var view = target.getAttribute("data-view");
-      if (view === "help") { helpModal("Как устроено демо", '<p>Это локальная симуляция оформления бизнес-кредита. Все компании, баллы и решения вымышлены.</p><p>Черновик, заявки, журнал согласий и статусы хранятся только в Local Storage этого браузера. Внешних банковских и государственных запросов нет.</p><p>Чтобы посмотреть ручную проверку, войдите под ролью «Сотрудник банка» и выберите тестовую заявку со средним скорингом.</p>'); return; }
+      if (view === "help") { helpModal("Как устроено демо", '<p>Демо оформления бизнес-кредита. Все компании, баллы и решения синтетические.</p><p>Черновики, заявки, журнал согласий и статусы хранятся в сервисе заявок. Вместо ЕГРЮЛ, ФНС и БКИ работают локальные моки, балл считает сервис скоринга с ML-моделью.</p><p>Чтобы посмотреть ручную проверку, войдите под ролью «Сотрудник банка» и выберите тестовую заявку со средним скорингом.</p>'); return; }
       if (view === "new") { startDraft(); return; }
       if (view === "dashboard" && db.session.role === "staff") view = "employee";
       db.view = view; saveDb(); render();
     } else if (action === "help") {
-      helpModal("Как устроено демо", '<p>В кабинете используются локальные синтетические компании и демонстрационный скоринг. Реальные сервисы банка, ФНС и БКИ не подключены.</p><p>Отметки о согласиях, статусы и название загруженной выписки сохраняются только в Local Storage браузера.</p>');
+      helpModal("Как устроено демо", '<p>Компании синтетические, сведения о них приходят из локальных моков ЕГРЮЛ, ФНС, ФССП и БКИ. Реальные сервисы банка не подключены.</p><p>Согласия, статусы и загруженные выписки сохраняются в сервисе заявок.</p>');
     } else if (action === "start-new") {
       startDraft();
     } else if (action === "resume-draft") {
@@ -1179,6 +1051,7 @@
         if (Number(draft.form.term) < productForTerm.minTerm || Number(draft.form.term) > productForTerm.maxTerm) {
           showToast("Срок для этого продукта — от " + productForTerm.minTerm + " до " + productForTerm.maxTerm + " месяцев."); return;
         }
+        draft.form.maxTerm = Math.min(productForTerm.maxTerm, Math.max(Number(draft.form.term), Number(draft.form.maxTerm) || Number(draft.form.term)));
       }
       draft.wizardIndex = Math.min(4, Number(draft.wizardIndex) + 1);
       saveDb(); render();
@@ -1186,7 +1059,7 @@
       if (!draft) return;
       var number = Number(value);
       if (field === "amount") draft.form.amount = number;
-      if (field === "term") draft.form.term = number;
+      if (field === "term") { draft.form.term = number; draft.form.maxTerm = number; }
       saveDb(); render();
     } else if (action === "apply-product") {
       if (!draft) return;
@@ -1214,19 +1087,21 @@
       draft.wizardStage = "consent"; saveDb(); render();
     } else if (action === "legal-info") {
       var kind = target.getAttribute("data-kind");
-      if (kind === "bki") helpModal("Согласие на запрос в БКИ", "<p>В этой демонстрации галочка сохраняется как запись о согласии на запрос кредитной истории по 218-ФЗ. Внешний запрос в бюро не отправляется.</p><p>В реальном продукте перед отправкой нужно показать утверждённый текст согласия и указать получателя сведений.</p>");
-      else helpModal("Согласие на обработку данных", "<p>В этой демонстрации галочка сохраняется как запись о согласии на обработку персональных данных по 152-ФЗ. Данные остаются в Local Storage браузера.</p><p>Этот текст не является юридическим документом.</p>");
+      if (kind === "bki") helpModal("Согласие на запрос в БКИ", "<p>Галочка сохраняется в журнале заявки как согласие на запрос кредитной истории по 218-ФЗ. Без неё запрос в бюро (в демо — мок) не выполняется.</p><p>В реальном продукте перед отправкой нужно показать утверждённый текст согласия и указать получателя сведений.</p>");
+      else helpModal("Согласие на обработку данных", "<p>Галочка сохраняется в журнале заявки как согласие на обработку персональных данных по 152-ФЗ.</p><p>Этот текст не является юридическим документом.</p>");
     } else if (action === "accept-offer") {
       var accepted = currentApp();
       if (accepted && isOffer(accepted.status)) {
-        setStatus(accepted, "accepted", "Клиент", "Предложение принято");
-        accepted.acceptedAt = isoNow(); db.view = "contract"; saveDb(); render();
+        api("POST", "/applications/" + accepted.id + "/accept").then(function (saved) {
+          upsertApp(saved); db.view = "contract"; savePrefs(); render();
+        }).catch(actionError);
       }
     } else if (action === "reject-offer") {
       var rejected = currentApp();
       if (rejected && isOffer(rejected.status)) {
-        setStatus(rejected, "rejected_by_client", "Клиент", "Клиент отказался от предложения");
-        db.view = "dashboard"; saveDb(); render(); showToast("Предложение отклонено.");
+        api("POST", "/applications/" + rejected.id + "/reject").then(function (saved) {
+          upsertApp(saved); db.view = "dashboard"; savePrefs(); render(); showToast("Предложение отклонено.");
+        }).catch(actionError);
       }
     } else if (action === "edit-offer") {
       editOffer(currentApp());
@@ -1236,7 +1111,7 @@
       var toSign = currentApp();
       if (toSign) signContract(toSign);
     } else if (action === "staff-select") {
-      db.staffAppId = target.getAttribute("data-id"); saveDb(); render();
+      db.staffAppId = target.getAttribute("data-id"); savePrefs(); render();
     } else if (action === "staff-approve") {
       employeeDecision("approved");
     } else if (action === "staff-counter") {
@@ -1251,12 +1126,14 @@
     var field = target.getAttribute("data-field");
     if (!field) return;
     var value = target.type === "checkbox" ? target.checked : target.value;
-    if (field === "amount" || field === "term" || field === "monthlyRevenue" || field === "currentPayments") value = Number(value);
+    if (field === "amount" || field === "term" || field === "maxTerm" || field === "monthlyRevenue" || field === "currentPayments") value = Number(value);
     persistField(field, value);
     if (field === "amount" || field === "term") {
       document.querySelectorAll('[data-field="' + field + '"]').forEach(function (node) {
         if (node !== target && node.type !== "checkbox") node.value = target.value;
       });
+      var maxTermInput = document.getElementById("max-term");
+      if (field === "term" && maxTermInput) { maxTermInput.value = target.value; maxTermInput.min = target.value; }
       refreshQuote();
     }
   }
@@ -1266,7 +1143,7 @@
     var field = target.getAttribute && target.getAttribute("data-field");
     if (field) {
       var value = target.type === "checkbox" ? target.checked : target.value;
-      if (["amount", "term", "monthlyRevenue", "currentPayments"].indexOf(field) >= 0) value = Number(value);
+      if (["amount", "term", "maxTerm", "monthlyRevenue", "currentPayments"].indexOf(field) >= 0) value = Number(value);
       persistField(field, value);
     }
     if (target.id === "document-file" && target.files && target.files[0]) {
@@ -1298,9 +1175,11 @@
       if (!file || (!/\.pdf$/i.test(file.name) && file.type !== "application/pdf")) {
         showToast("Выберите PDF-выписку, чтобы продолжить."); return;
       }
-      app.documentName = file.name;
-      setStatus(app, "enrichment", "Клиент", "Выписка добавлена");
-      due(app, 2600); saveDb(); render(); showToast("Выписка добавлена. Продолжаем проверку.");
+      var data = new FormData();
+      data.append("file", file);
+      api("POST", "/applications/" + app.id + "/documents", data).then(function (saved) {
+        upsertApp(saved); render(); showToast("Выписка добавлена. Продолжаем проверку.");
+      }).catch(actionError);
     }
   }
   appRoot.addEventListener("click", onClick);
@@ -1315,7 +1194,7 @@
       if (app) openApp(app);
     }
   });
-  setInterval(tick, 900);
-  saveDb();
+  setInterval(function () { refreshApps(false); }, 1500);
   render();
+  refreshApps(true);
 })();
