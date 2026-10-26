@@ -1,0 +1,353 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Сервис скоринга",
+    "description": "Балл риска 0–100: ML-модель финансовой устойчивости (40) + правила (60).",
+    "version": "1.0.0"
+  },
+  "paths": {
+    "/health": {
+      "get": {
+        "tags": [
+          "Сервис"
+        ],
+        "summary": "Health",
+        "operationId": "health_health_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/score": {
+      "post": {
+        "tags": [
+          "Скоринг"
+        ],
+        "summary": "Посчитать балл заявки",
+        "operationId": "score_endpoint_api_v1_score_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ScoreRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ScoreResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "Factor": {
+        "properties": {
+          "code": {
+            "type": "string",
+            "title": "Code"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "value": {
+            "type": "number",
+            "title": "Value"
+          },
+          "max": {
+            "type": "integer",
+            "title": "Max"
+          },
+          "note": {
+            "type": "string",
+            "title": "Note"
+          }
+        },
+        "type": "object",
+        "required": [
+          "code",
+          "name",
+          "value",
+          "max",
+          "note"
+        ],
+        "title": "Factor"
+      },
+      "HTTPValidationError": {
+        "properties": {
+          "detail": {
+            "items": {
+              "$ref": "#/components/schemas/ValidationError"
+            },
+            "type": "array",
+            "title": "Detail"
+          }
+        },
+        "type": "object",
+        "title": "HTTPValidationError"
+      },
+      "ModelResult": {
+        "properties": {
+          "used": {
+            "type": "boolean",
+            "title": "Used"
+          },
+          "probability": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Probability"
+          },
+          "threshold": {
+            "type": "number",
+            "title": "Threshold",
+            "default": 0.78
+          },
+          "version": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Version"
+          },
+          "reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reason"
+          }
+        },
+        "type": "object",
+        "required": [
+          "used"
+        ],
+        "title": "ModelResult"
+      },
+      "ScoreRequest": {
+        "properties": {
+          "inn": {
+            "type": "string",
+            "pattern": "^\\d{10}$|^\\d{12}$",
+            "title": "Inn"
+          },
+          "registered_on": {
+            "type": "string",
+            "format": "date",
+            "title": "Registered On"
+          },
+          "okved": {
+            "type": "string",
+            "title": "Okved"
+          },
+          "statements": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Statements"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "credit_history": {
+            "type": "string",
+            "enum": [
+              "clear",
+              "closed_overdue",
+              "current_overdue"
+            ],
+            "title": "Credit History",
+            "default": "clear"
+          },
+          "tax_debt_rub": {
+            "type": "number",
+            "title": "Tax Debt Rub",
+            "default": 0
+          },
+          "court_cases_as_defendant": {
+            "type": "integer",
+            "title": "Court Cases As Defendant",
+            "default": 0
+          },
+          "fssp_debt_rub": {
+            "type": "number",
+            "title": "Fssp Debt Rub",
+            "default": 0
+          },
+          "monthly_revenue_rub": {
+            "type": "number",
+            "minimum": 0.0,
+            "title": "Monthly Revenue Rub"
+          },
+          "current_payments_rub": {
+            "type": "number",
+            "minimum": 0.0,
+            "title": "Current Payments Rub",
+            "default": 0
+          },
+          "new_payment_rub": {
+            "type": "number",
+            "minimum": 0.0,
+            "title": "New Payment Rub"
+          }
+        },
+        "type": "object",
+        "required": [
+          "inn",
+          "registered_on",
+          "okved",
+          "monthly_revenue_rub",
+          "new_payment_rub"
+        ],
+        "title": "ScoreRequest"
+      },
+      "ScoreResponse": {
+        "properties": {
+          "total": {
+            "type": "number",
+            "title": "Total"
+          },
+          "factors": {
+            "items": {
+              "$ref": "#/components/schemas/Factor"
+            },
+            "type": "array",
+            "title": "Factors"
+          },
+          "model": {
+            "$ref": "#/components/schemas/ModelResult"
+          },
+          "load_ratio": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Load Ratio"
+          }
+        },
+        "type": "object",
+        "required": [
+          "total",
+          "factors",
+          "model",
+          "load_ratio"
+        ],
+        "title": "ScoreResponse"
+      },
+      "Statements": {
+        "properties": {
+          "year": {
+            "type": "integer",
+            "title": "Year"
+          },
+          "units": {
+            "type": "string",
+            "const": "thousand_RUB",
+            "title": "Units",
+            "default": "thousand_RUB"
+          },
+          "lines": {
+            "additionalProperties": {
+              "type": "number"
+            },
+            "type": "object",
+            "title": "Lines"
+          }
+        },
+        "type": "object",
+        "required": [
+          "year",
+          "lines"
+        ],
+        "title": "Statements"
+      },
+      "ValidationError": {
+        "properties": {
+          "loc": {
+            "items": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                }
+              ]
+            },
+            "type": "array",
+            "title": "Location"
+          },
+          "msg": {
+            "type": "string",
+            "title": "Message"
+          },
+          "type": {
+            "type": "string",
+            "title": "Error Type"
+          },
+          "input": {
+            "title": "Input"
+          },
+          "ctx": {
+            "type": "object",
+            "title": "Context"
+          }
+        },
+        "type": "object",
+        "required": [
+          "loc",
+          "msg",
+          "type"
+        ],
+        "title": "ValidationError"
+      }
+    }
+  }
+}
