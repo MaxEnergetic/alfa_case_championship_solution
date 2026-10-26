@@ -1,0 +1,28 @@
+name: alfa-credit-real
+services:
+  fns-parser:
+    build: { context: ./backend }
+    restart: unless-stopped
+    volumes:
+      - parser-data:/app/data
+  applications:
+    build: { context: ., dockerfile: services/applications/Dockerfile }
+    restart: unless-stopped
+    environment:
+      PARSER_URL: http://fns-parser:8000
+      INITIAL_EMAIL: ${INITIAL_EMAIL:-user@local.test}
+      INITIAL_PASSWORD: ${INITIAL_PASSWORD:-local-change-me}
+    volumes:
+      - accounts-data:/data
+    depends_on:
+      fns-parser: { condition: service_healthy }
+  frontend:
+    build: { context: ., dockerfile: frontend/Dockerfile }
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:${WEB_PORT:-8080}:8080"
+    depends_on:
+      applications: { condition: service_healthy }
+volumes:
+  accounts-data:
+  parser-data:

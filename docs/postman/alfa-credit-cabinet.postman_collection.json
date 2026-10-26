@@ -1,0 +1,290 @@
+{
+  "info": {
+    "name": "Real company recommendations",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{token}}",
+        "type": "string"
+      }
+    ]
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://127.0.0.1:8080"
+    },
+    {
+      "key": "email",
+      "value": "user@local.test"
+    },
+    {
+      "key": "password",
+      "value": "local-change-me"
+    }
+  ],
+  "item": [
+    {
+      "name": "Login",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{baseUrl}}/api/v1/auth/login",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"email\": \"{{email}}\",\n  \"password\": \"{{password}}\"\n}"
+        },
+        "auth": {
+          "type": "noauth"
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.environment.set('token', pm.response.json().token);"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Create questionnaire",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "url": "{{baseUrl}}/api/v1/credit/sessions"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "const x=pm.response.json();pm.environment.set('session',x.session_id);pm.environment.set('revision',x.revision);"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Current questionnaire",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": "{{baseUrl}}/api/v1/credit/sessions/{{session}}"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.environment.set('revision',pm.response.json().revision);"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Answer next question (update question_id and value)",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{baseUrl}}/api/v1/credit/sessions/{{session}}/answers",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"revision\": {{revision}},\n  \"question_id\": \"knowledge\",\n  \"value\": \"no\"\n}"
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.environment.set('revision',pm.response.json().revision);"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Purchase amounts (when question_group is present)",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{baseUrl}}/api/v1/credit/sessions/{{session}}/answers/batch",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"revision\": {{revision}},\n  \"answers\": [\n    {\"question_id\":\"asset_cost\",\"value\":5000000},\n    {\"question_id\":\"amount\",\"value\":3000000}\n  ]\n}"
+        }
+      }
+    },
+    {
+      "name": "Real FNS lookup",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{baseUrl}}/api/v1/credit/sessions/{{session}}/registry/jobs",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"identifier\": \"5505223431\",\n  \"full\": false,\n  \"enrich\": true\n}"
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.environment.set('job',pm.response.json().job_id);"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Job status",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": "{{baseUrl}}/api/v1/jobs/{{job}}"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "const x=pm.response.json();if(x.captcha)pm.environment.set('captcha',x.captcha.id);"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "CAPTCHA image",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": "{{baseUrl}}/api/v1/jobs/{{job}}/captchas/{{captcha}}/image"
+      }
+    },
+    {
+      "name": "Human CAPTCHA answer (enter code)",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{baseUrl}}/api/v1/jobs/{{job}}/captchas/{{captcha}}/answer",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"action\": \"answer\",\n  \"code\": \"{{code}}\"\n}"
+        }
+      }
+    },
+    {
+      "name": "Attach registry (INN must match questionnaire)",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{baseUrl}}/api/v1/credit/sessions/{{session}}/registry",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"revision\": {{revision}},\n  \"job_id\": \"{{job}}\"\n}"
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.environment.set('revision',pm.response.json().revision);"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Financial assessment",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{baseUrl}}/api/v1/credit/sessions/{{session}}/scoring/jobs",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"revision\": {{revision}}\n}"
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.environment.set('job',pm.response.json().job_id);"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Ready combined JSON",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": "{{baseUrl}}/api/v1/credit/sessions/{{session}}/result"
+      }
+    },
+    {
+      "name": "Logout",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "url": "{{baseUrl}}/api/v1/auth/logout"
+      }
+    }
+  ]
+}

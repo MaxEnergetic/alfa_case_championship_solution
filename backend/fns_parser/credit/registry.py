@@ -31,7 +31,7 @@ def attach(record, job, selected_ogrn):
         raise CreditError(409, "registry_not_ready", "Дождитесь завершения задания парсера")
     if job['result'].get('schema_version') not in ('1.0', 'compact-1.0'):
         raise CreditError(422, 'not_registry_job', 'Нужен результат задания парсера, а не скоринга')
-    answers = replay(record["entries"], date.fromisoformat(record["date"])).answers
+    answers = replay(record["entries"], date.fromisoformat(record["date"]), record.get('flow_version', 1)).answers
     inn = answers.get("inn")
     if not inn:
         raise CreditError(409, "inn_required", "Сначала укажите ИНН в анкете")

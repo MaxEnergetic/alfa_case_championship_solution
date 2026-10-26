@@ -1,0 +1,13 @@
+THIRD_PARTY_NOTICES — Подбор финансирования для бизнеса
+
+Реальные публичные источники:
+- ФНС: https://egrul.nalog.ru/ (ЕГРЮЛ/ЕГРИП), https://pb.nalog.ru/ («Прозрачный бизнес»), https://bo.nalog.gov.ru/ (ГИР БО).
+- RFSD — Russian Financial Statements Database, Hugging Face irlspbru/RFSD, CC BY 4.0.
+  Sergey Bondarkov, Viktor Ledenev, Dmitriy Skougarevskiy. Scientific Data 12 (2025).
+  DOI 10.1038/s41597-025-05150-1. RFSD используется для опубликованной финансовой отчётности.
+
+Модель команды и её ограничения: ML/README.md, ML/source_manifest.json, backend/fns_parser/scoring/bundle/manifest.json. Модель оценивает финансовую устойчивость, не возврат кредита. Реальные банковские системы, БКИ, подписания и выдача не подключены. Платных источников и API-ключей нет. Сетевые замены в тестах являются только тестовыми фикстурами.
+
+Компоненты: Python (PSF), nginx (BSD-2-Clause), FastAPI/Starlette/Pydantic/Uvicorn/HTTPX (MIT/BSD), NumPy/pandas/SciPy/scikit-learn/joblib (BSD), библиотеки PDF из backend/THIRD_PARTY_NOTICES. Версии зафиксированы в requirements-файлах и Dockerfile; лицензии включены в дистрибутивы пакетов.
+
+Дизайн использует общие мотивы публичного оформления Альфа-Банка; банковские компоненты и шрифты не включены. Кабинет не является подключённым продуктом банка.
